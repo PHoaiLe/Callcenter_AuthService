@@ -3,9 +3,9 @@ server:
 
 spring:
   profile:
-    active: dev
+    active: prod
   config:
-    import: optional:./env/local.env[.properties]
+    import: optional:./env/production.env[.properties]
   application:
     name: ${APPLICATION_NAME}
   datasource:
