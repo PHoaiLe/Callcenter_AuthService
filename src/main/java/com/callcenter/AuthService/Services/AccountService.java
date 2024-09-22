@@ -1,24 +1,43 @@
 package com.callcenter.AuthService.Services;
 
-import com.callcenter.AuthService.DTO.External.EmailPasswordRegisterInfoDTO;
-import com.callcenter.AuthService.Entities.AccountEntity;
-import com.callcenter.AuthService.Entities.EmailPasswordAuthenticationEntity;
-import com.callcenter.AuthService.Repositories.AccountRepository;
-import com.callcenter.AuthService.Repositories.EmailPasswordRepository;
+import com.callcenter.AuthService.DTO.RegisterInput;
+import com.callcenter.AuthService.DTO.RegisterResult;
+import com.callcenter.AuthService.Services.RegisterService.RegisterServiceProvider;
+import com.callcenter.AuthService.Services.RegisterService.RegisterServiceProviderV2;
+import com.callcenter.AuthService.Services.RegisterService.RegisterStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.lang.reflect.InvocationTargetException;
 
 @Service
 public class AccountService
 {
-    @Autowired
-    protected AccountRepository accountRepository;
-    @Autowired
-    protected EmailPasswordRepository emailPasswordRepository;
+//    private RegisterServiceProvider registerServiceProvider = RegisterServiceProvider.getInstance();
 
-    public EmailPasswordAuthenticationEntity create(EmailPasswordRegisterInfoDTO providedInfo)
+    private RegisterServiceProviderV2 registerServiceProviderV2;
+
+
+    public AccountService()
+    {}
+
+    @Autowired
+    public AccountService(RegisterServiceProviderV2 registerServiceProviderV2)
     {
-        EmailPasswordAuthenticationEntity entity = EmailPasswordAuthenticationEntity.getInstance(providedInfo.email(), providedInfo.password());
-        return emailPasswordRepository.save(entity);
+        this.registerServiceProviderV2 = registerServiceProviderV2;
     }
+
+    public <R extends RegisterResult, I extends RegisterInput> R create (I input)
+    {
+        RegisterStrategy<R, I> registerStrategy = registerServiceProviderV2.getRegisterStrategy(input.getClass());
+        if(registerStrategy == null)
+        {
+            System.out.println(new NoSuchMethodException("Register strategy is null, check if the strategy has no target type of input to handle"));
+            return null;
+        }
+
+        registerStrategy.register(input);
+        return null;
+    }
+
 }

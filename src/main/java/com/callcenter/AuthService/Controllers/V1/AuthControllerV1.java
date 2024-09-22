@@ -1,13 +1,16 @@
 package com.callcenter.AuthService.Controllers.V1;
 
-import com.callcenter.AuthService.DTO.External.EmailPasswordRegisterInfoDTO;
-import com.callcenter.AuthService.Entities.EmailPasswordAuthenticationEntity;
+import com.callcenter.AuthService.DTO.ExternalInput.EaPRegisterInfoRequest;
+import com.callcenter.AuthService.DTO.Internal.EaPAccountRegisterInput;
 import com.callcenter.AuthService.Services.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 @Controller
 @RestController
@@ -27,15 +30,23 @@ public class AuthControllerV1
     }
 
     @PostMapping(value = "/register/standard")
-    public ResponseEntity<EmailPasswordRegisterInfoDTO> registerAccount(@RequestBody EmailPasswordRegisterInfoDTO providedInfo)
+    public CompletableFuture<ResponseEntity<?>> registerAccount(@RequestBody EaPRegisterInfoRequest providedInfo)
     {
-        EmailPasswordAuthenticationEntity createdEntity = accountService.create(providedInfo);
+        System.out.println(Thread.currentThread().getName());
+        CompletableFuture<ResponseEntity<?>> asyncResult = CompletableFuture.supplyAsync(new Supplier<ResponseEntity<?>>() {
+            @Override
+            public ResponseEntity<?> get() {
+                EaPAccountRegisterInput input = new EaPAccountRegisterInput();
+                input.setEmail(providedInfo.email());
+                input.setPassword(providedInfo.password());
 
-        EmailPasswordRegisterInfoDTO result = new EmailPasswordRegisterInfoDTO(createdEntity.getEmail(), createdEntity.getPassword());
+                accountService.create(input);
 
-        ResponseEntity a = new ResponseEntity<EmailPasswordRegisterInfoDTO>(result, HttpStatus.OK);
+                return null;
+            }
+        });
 
-        return a;
+        return asyncResult;
     }
 
 }
