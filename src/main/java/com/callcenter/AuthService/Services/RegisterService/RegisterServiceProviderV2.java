@@ -1,7 +1,7 @@
 package com.callcenter.AuthService.Services.RegisterService;
 
-import com.callcenter.AuthService.DTO.RegisterInput;
-import com.callcenter.AuthService.DTO.RegisterResult;
+import com.callcenter.AuthService.DTO.Register.RegisterInput;
+import com.callcenter.AuthService.DTO.Register.RegisterResult;
 import com.callcenter.AuthService.Support.ApplicationContext.ApplicationContextProvider;
 import com.callcenter.AuthService.Support.Package.PackageAccess;
 import org.springframework.beans.factory.annotation.Autowired;

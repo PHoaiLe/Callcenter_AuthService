@@ -1,14 +1,11 @@
 package com.callcenter.AuthService.Services;
 
-import com.callcenter.AuthService.DTO.RegisterInput;
-import com.callcenter.AuthService.DTO.RegisterResult;
-import com.callcenter.AuthService.Services.RegisterService.RegisterServiceProvider;
+import com.callcenter.AuthService.DTO.Register.RegisterInput;
+import com.callcenter.AuthService.DTO.Register.RegisterResult;
 import com.callcenter.AuthService.Services.RegisterService.RegisterServiceProviderV2;
 import com.callcenter.AuthService.Services.RegisterService.RegisterStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.lang.reflect.InvocationTargetException;
 
 @Service
 public class AccountService
@@ -36,8 +33,7 @@ public class AccountService
             return null;
         }
 
-        registerStrategy.register(input);
-        return null;
+        return registerStrategy.register(input);
     }
 
 }

@@ -1,4 +1,4 @@
-package com.callcenter.AuthService.DTO;
+package com.callcenter.AuthService.DTO.Register;
 
 import lombok.Data;
 import lombok.Getter;

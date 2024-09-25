@@ -1,7 +1,8 @@
 package com.callcenter.AuthService.Services.RegisterService.Strategies;
 
-import com.callcenter.AuthService.DTO.Internal.EaPAccountRegisterInput;
-import com.callcenter.AuthService.DTO.Internal.EaPAccountRegisterResult;
+import com.callcenter.AuthService.Constants.Register.RegisterStatusConstants;
+import com.callcenter.AuthService.DTO.Register.Internal.EaPAccountRegisterInput;
+import com.callcenter.AuthService.DTO.Register.Internal.EaPAccountRegisterResult;
 import com.callcenter.AuthService.Entities.EmailPasswordAuthenticationEntity;
 import com.callcenter.AuthService.Repositories.AccountRepository;
 import com.callcenter.AuthService.Repositories.EmailPasswordRepository;
@@ -27,21 +28,6 @@ public class EaPAccountRegisterStrategy extends RegisterStrategy<EaPAccountRegis
         this.emailPasswordRepository = emailPasswordRepository;
     }
 
-    public EaPAccountRegisterStrategy()
-    {
-        super(inputClassToHandle.getName(), inputClassToHandle);
-    }
-
-//    @Autowired
-//    public void setAccountRepository(AccountRepository accountRepository) {
-//        this.accountRepository = accountRepository;
-//    }
-//
-//    @Autowired
-//    public void setEmailPasswordRepository(EmailPasswordRepository emailPasswordRepository) {
-//        this.emailPasswordRepository = emailPasswordRepository;
-//    }
-
     @Override
     public String getKey() {
         return super.getKey();
@@ -64,22 +50,29 @@ public class EaPAccountRegisterStrategy extends RegisterStrategy<EaPAccountRegis
     public EaPAccountRegisterResult register(EaPAccountRegisterInput input)
     {
         System.out.println("Email & Password Strategy");
-
-        EmailPasswordAuthenticationEntity emailPasswordAuthenticationEntity = EmailPasswordAuthenticationEntity.getInstance(
-                input.getEmail(), input.getPassword()
-        );
+        EaPAccountRegisterResult result = new EaPAccountRegisterResult();
 
         Optional<EmailPasswordAuthenticationEntity> optionalEmailPasswordAuthenticationEntity = emailPasswordRepository.findByEmail(input.getEmail());
 
-        System.out.println("Existed Account: ");
-        System.out.println(optionalEmailPasswordAuthenticationEntity.get());
-
         if(optionalEmailPasswordAuthenticationEntity.isEmpty() == false)
         {
-            System.out.println("Account has already existed");
-            return null;
+            result.setSuccess(false);
+            result.setMessage(RegisterStatusConstants.EMAIL_ALREADY_USED.message());
+            result.setStatusCode(RegisterStatusConstants.EMAIL_ALREADY_USED.statusCode());
+            return result;
         }
 
-        return null;
+        EmailPasswordAuthenticationEntity newEntityRecord = EmailPasswordAuthenticationEntity.getInstance(
+                input.getEmail(), input.getPassword()
+        );
+
+        EmailPasswordAuthenticationEntity createdRecord = emailPasswordRepository.save(newEntityRecord);
+
+        result.setId(createdRecord.getId());
+        result.setSuccess(true);
+        result.setMessage(RegisterStatusConstants.SUCCESS.message());
+        result.setStatusCode(RegisterStatusConstants.SUCCESS.statusCode());
+
+        return result;
     }
 }

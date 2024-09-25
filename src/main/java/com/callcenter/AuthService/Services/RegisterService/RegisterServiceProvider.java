@@ -1,12 +1,9 @@
 package com.callcenter.AuthService.Services.RegisterService;
 
-import com.callcenter.AuthService.DTO.RegisterInput;
-import com.callcenter.AuthService.DTO.RegisterResult;
-import com.callcenter.AuthService.Support.ApplicationContext.ApplicationContextProvider;
+import com.callcenter.AuthService.DTO.Register.RegisterInput;
+import com.callcenter.AuthService.DTO.Register.RegisterResult;
 import com.callcenter.AuthService.Support.Package.PackageAccess;
-import org.springframework.context.ApplicationContext;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

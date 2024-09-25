@@ -1,7 +1,7 @@
 package com.callcenter.AuthService.Services.RegisterService;
 
-import com.callcenter.AuthService.DTO.RegisterInput;
-import com.callcenter.AuthService.DTO.RegisterResult;
+import com.callcenter.AuthService.DTO.Register.RegisterInput;
+import com.callcenter.AuthService.DTO.Register.RegisterResult;
 
 public abstract class RegisterStrategy<R extends RegisterResult, I extends RegisterInput>
 {

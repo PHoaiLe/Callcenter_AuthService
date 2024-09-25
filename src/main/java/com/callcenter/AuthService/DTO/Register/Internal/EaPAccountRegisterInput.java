@@ -1,6 +1,6 @@
-package com.callcenter.AuthService.DTO.Internal;
+package com.callcenter.AuthService.DTO.Register.Internal;
 
-import com.callcenter.AuthService.DTO.RegisterInput;
+import com.callcenter.AuthService.DTO.Register.RegisterInput;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
