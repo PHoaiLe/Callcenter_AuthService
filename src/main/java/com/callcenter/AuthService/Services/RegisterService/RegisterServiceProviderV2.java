@@ -1,7 +1,7 @@
 package com.callcenter.AuthService.Services.RegisterService;
 
+import com.callcenter.AuthService.DTO.Register.RegisterStrategyResult;
 import com.callcenter.AuthService.DTO.Register.RegisterInput;
-import com.callcenter.AuthService.DTO.Register.RegisterResult;
 import com.callcenter.AuthService.Support.ApplicationContext.ApplicationContextProvider;
 import com.callcenter.AuthService.Support.Package.PackageAccess;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class RegisterServiceProviderV2<R extends RegisterResult, I extends RegisterInput>
+public class RegisterServiceProviderV2<R extends RegisterStrategyResult, I extends RegisterInput>
 {
     private static final String packageOfStrategiesPath = "com.callcenter.AuthService.Services.RegisterService.Strategies";
     private Map<Class<?>, RegisterStrategy<R,I>> strategyRegistry = null;

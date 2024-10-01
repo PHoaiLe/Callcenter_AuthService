@@ -1,44 +1,38 @@
 package com.callcenter.AuthService.DTO.Register;
 
+import com.callcenter.AuthService.DTO.ServiceResult;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 
 @Data
-@Setter
 @Getter
-public class RegisterResult
+@Setter
+public class RegisterResult extends ServiceResult
 {
-    protected boolean isSuccess;
-    protected int statusCode;
-    protected String message;
-
     public RegisterResult()
     {
-        this.isSuccess = false;
-        this.statusCode = HttpStatus.NOT_IMPLEMENTED.value();
-        this.message = null;
+        super();
     }
 
     public RegisterResult(boolean isSuccess)
     {
-        this.isSuccess = isSuccess;
-        this.statusCode = HttpStatus.NOT_IMPLEMENTED.value();
-        this.message = null;
+        super(isSuccess);
     }
 
-    public RegisterResult(boolean isSuccess, String message, int statusCode)
+    public RegisterResult(boolean isSuccess, int statusCode)
     {
-        this.isSuccess = isSuccess;
-        this.statusCode = statusCode;
-        this.message = message;
+        super(isSuccess, statusCode);
     }
-    public RegisterResult(boolean isSuccess, String message, HttpStatusCode statusCode)
+
+    public RegisterResult(boolean isSuccess, int statusCode, String message)
     {
-        this.isSuccess = isSuccess;
-        this.statusCode = statusCode.value();
-        this.message = message;
+        super(isSuccess, statusCode, message);
+    }
+
+    public RegisterResult(boolean isSuccess, HttpStatusCode statusCode, String message)
+    {
+        super(isSuccess, statusCode, message);
     }
 }

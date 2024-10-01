@@ -1,6 +1,6 @@
-package com.callcenter.AuthService.DTO.Register.Internal;
+package com.callcenter.AuthService.DTO.Register.InternalOutput;
 
-import com.callcenter.AuthService.DTO.Register.RegisterResult;
+import com.callcenter.AuthService.DTO.Register.RegisterStrategyResult;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,9 +9,8 @@ import org.springframework.http.HttpStatusCode;
 @Data
 @Getter
 @Setter
-public class EaPAccountRegisterResult extends RegisterResult
+public class EaPAccountRegisterStrategyResult extends RegisterStrategyResult
 {
-    private String id;
     private String email;
     private String password;
 

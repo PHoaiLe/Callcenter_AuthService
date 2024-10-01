@@ -1,9 +1,9 @@
 package com.callcenter.AuthService.Services.RegisterService;
 
+import com.callcenter.AuthService.DTO.Register.RegisterStrategyResult;
 import com.callcenter.AuthService.DTO.Register.RegisterInput;
-import com.callcenter.AuthService.DTO.Register.RegisterResult;
 
-public abstract class RegisterStrategy<R extends RegisterResult, I extends RegisterInput>
+public abstract class RegisterStrategy<R extends RegisterStrategyResult, I extends RegisterInput>
 {
     protected String key = null;
     protected Class<I> inputClassToHandle;
@@ -39,14 +39,15 @@ public abstract class RegisterStrategy<R extends RegisterResult, I extends Regis
         this.key = key;
     }
 
-    public Class<I> getInputClassToHandle() {
+    protected Class<I> getInputClassToHandle() {
         return inputClassToHandle;
     }
 
-    public void setInputClassToHandle(Class<I> inputClassToHandle) {
+    protected void setInputClassToHandle(Class<I> inputClassToHandle) {
         this.inputClassToHandle = inputClassToHandle;
     }
 
     abstract public RegisterStrategy initializes();
     abstract public R register(I input);
+    abstract public void rollback(String recordId);
 }

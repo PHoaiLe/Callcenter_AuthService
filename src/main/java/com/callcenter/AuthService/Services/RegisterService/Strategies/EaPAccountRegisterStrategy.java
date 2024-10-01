@@ -1,19 +1,20 @@
 package com.callcenter.AuthService.Services.RegisterService.Strategies;
 
 import com.callcenter.AuthService.Constants.Register.RegisterStatusConstants;
-import com.callcenter.AuthService.DTO.Register.Internal.EaPAccountRegisterInput;
-import com.callcenter.AuthService.DTO.Register.Internal.EaPAccountRegisterResult;
+import com.callcenter.AuthService.DTO.Register.InternalInput.EaPAccountRegisterInput;
+import com.callcenter.AuthService.DTO.Register.InternalOutput.EaPAccountRegisterStrategyResult;
 import com.callcenter.AuthService.Entities.EmailPasswordAuthenticationEntity;
 import com.callcenter.AuthService.Repositories.AccountRepository;
 import com.callcenter.AuthService.Repositories.EmailPasswordRepository;
 import com.callcenter.AuthService.Services.RegisterService.RegisterStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @Service
-public class EaPAccountRegisterStrategy extends RegisterStrategy<EaPAccountRegisterResult, EaPAccountRegisterInput>
+public class EaPAccountRegisterStrategy extends RegisterStrategy<EaPAccountRegisterStrategyResult, EaPAccountRegisterInput>
 {
     protected static final Class<EaPAccountRegisterInput> inputClassToHandle = EaPAccountRegisterInput.class;
 
@@ -47,18 +48,19 @@ public class EaPAccountRegisterStrategy extends RegisterStrategy<EaPAccountRegis
     }
 
     @Override
-    public EaPAccountRegisterResult register(EaPAccountRegisterInput input)
+    public EaPAccountRegisterStrategyResult register(EaPAccountRegisterInput input)
     {
         System.out.println("Email & Password Strategy");
-        EaPAccountRegisterResult result = new EaPAccountRegisterResult();
+        EaPAccountRegisterStrategyResult result = new EaPAccountRegisterStrategyResult();
 
         Optional<EmailPasswordAuthenticationEntity> optionalEmailPasswordAuthenticationEntity = emailPasswordRepository.findByEmail(input.getEmail());
 
+        //the email has already been registered, force to use new email
         if(optionalEmailPasswordAuthenticationEntity.isEmpty() == false)
         {
+            result.setRecordId(null);
             result.setSuccess(false);
-            result.setMessage(RegisterStatusConstants.EMAIL_ALREADY_USED.message());
-            result.setStatusCode(RegisterStatusConstants.EMAIL_ALREADY_USED.statusCode());
+            result.setHttpResult(RegisterStatusConstants.EMAIL_ALREADY_USED);
             return result;
         }
 
@@ -68,11 +70,19 @@ public class EaPAccountRegisterStrategy extends RegisterStrategy<EaPAccountRegis
 
         EmailPasswordAuthenticationEntity createdRecord = emailPasswordRepository.save(newEntityRecord);
 
-        result.setId(createdRecord.getId());
+        result.setRecordId(createdRecord.getId());
+        result.setEmail(newEntityRecord.getEmail());
+        result.setPassword(newEntityRecord.getPassword());
         result.setSuccess(true);
-        result.setMessage(RegisterStatusConstants.SUCCESS.message());
-        result.setStatusCode(RegisterStatusConstants.SUCCESS.statusCode());
+        result.setHttpResult(RegisterStatusConstants.SUCCESS);
 
         return result;
     }
+
+    @Override
+    public void rollback(String recordId)
+    {
+        emailPasswordRepository.deleteById(recordId);
+    }
+
 }

@@ -2,9 +2,6 @@ package com.callcenter.AuthService.DTO.Register.ExternalOutput;
 
 import com.callcenter.AuthService.DTO.APIResponse;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 
 @Data

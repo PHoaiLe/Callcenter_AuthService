@@ -1,4 +1,4 @@
-package com.callcenter.AuthService.DTO.Register.Internal;
+package com.callcenter.AuthService.DTO.Register.InternalInput;
 
 import com.callcenter.AuthService.DTO.Register.RegisterInput;
 import lombok.Data;

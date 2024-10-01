@@ -4,13 +4,15 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Entity
-@Table(name = "role")
 @Data
 @Getter
 @Setter
-public class RoleEntity
+@ToString
+@Table(name = "account_register_type")
+public class RegisterTypeEntity
 {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,32 +23,30 @@ public class RoleEntity
 
     private String value;
 
-    private RoleEntity()
+    public RegisterTypeEntity()
     {
         this.id = null;
         this.name = null;
         this.value = null;
     }
 
-    private RoleEntity(String name, String value)
+    public RegisterTypeEntity(Integer id)
     {
-        this.id = null;
-        this.name = name;
-        this.value = value;
+        this.id = id;
+        this.name = null;
+        this.value = null;
     }
 
-    private RoleEntity(Integer id, String name, String value)
+    public RegisterTypeEntity(Integer id, String name)
     {
+        this.id = id;
+        this.name = name;
+        this.value = null;
+    }
+
+    public RegisterTypeEntity(Integer id, String name, String value) {
         this.id = id;
         this.name = name;
         this.value = value;
     }
-
-    public static RoleEntity getInstance(String name, String value)
-    {
-        RoleEntity entity = new RoleEntity(name, value);
-
-        return entity;
-    }
-
 }
