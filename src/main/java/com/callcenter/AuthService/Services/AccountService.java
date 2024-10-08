@@ -58,7 +58,7 @@ public class AccountService
         }
 
         try {
-            AccountEntity entity = AccountEntity.getInstance(authInfoId, role, status, registerType, currentDate);
+            AccountEntity entity = AccountEntity.getInstance(authInfoId, status, registerType, currentDate);
             return accountRepository.save(entity);
         }
         catch (Exception exception)
@@ -128,5 +128,4 @@ public class AccountService
 
         return finalResult;
     }
-
 }

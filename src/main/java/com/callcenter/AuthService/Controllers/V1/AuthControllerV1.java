@@ -1,6 +1,7 @@
 package com.callcenter.AuthService.Controllers.V1;
 
 import com.callcenter.AuthService.Constants.AccountRegisterTypeEnum;
+import com.callcenter.AuthService.DTO.Login.ExternalInput.EaPLoginInfoRequest;
 import com.callcenter.AuthService.DTO.Register.ExternalInput.EaPRegisterInfoRequest;
 import com.callcenter.AuthService.DTO.Register.ExternalOutput.EaPRegisterInfoResponse;
 import com.callcenter.AuthService.DTO.Register.InternalInput.EaPAccountRegisterInput;
@@ -64,6 +65,21 @@ public class AuthControllerV1
                 ResponseEntity apiResponse = new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getStatusCode()));
 
                 return apiResponse;
+            }
+        });
+
+        return asyncResult;
+    }
+
+    @PostMapping(value = "/login/standard")
+    public CompletableFuture<ResponseEntity> loginByEaPAuthentication(@RequestBody EaPLoginInfoRequest provideInfo)
+    {
+        CompletableFuture<ResponseEntity> asyncResult = CompletableFuture.supplyAsync(new Supplier<ResponseEntity>() {
+            @Override
+            public ResponseEntity get()
+            {
+                
+                return null;
             }
         });
 

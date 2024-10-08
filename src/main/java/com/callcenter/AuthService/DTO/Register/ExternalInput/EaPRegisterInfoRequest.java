@@ -1,7 +1,12 @@
 package com.callcenter.AuthService.DTO.Register.ExternalInput;
 
+import lombok.NonNull;
+
 public record EaPRegisterInfoRequest(
-   String email,
-   String password,
-   String roleValue
+        @NonNull
+        String email,
+        @NonNull
+        String password,
+        @NonNull
+        String roleValue
 ) {}

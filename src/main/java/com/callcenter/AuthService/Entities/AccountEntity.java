@@ -20,7 +20,6 @@ public class AccountEntity
     {
         this.id = "";
         this.auth_info_id = "";
-        this.role = -1;
         this.status = -1;
         this.register_type = -1;
         this.created_at = new Date();
@@ -34,14 +33,12 @@ public class AccountEntity
     @NonNull
     protected String auth_info_id;
     @NonNull
-    protected Integer role;
-    @NonNull
     protected Integer status;
     @NonNull
     protected Integer register_type;
     protected Date created_at;
 
-    public static AccountEntity getInstance(String authInfoId, Integer role, Integer status, Integer registerType, Date createdAt)
+    public static AccountEntity getInstance(String authInfoId, Integer status, Integer registerType, Date createdAt)
     {
         AccountEntity newEntity = new AccountEntity();
 
@@ -50,7 +47,6 @@ public class AccountEntity
 
         newEntity.setId(id);
         newEntity.setAuth_info_id(authInfoId);
-        newEntity.setRole(role);
         newEntity.setStatus(status);
         newEntity.setRegister_type(registerType);
         newEntity.setCreated_at(createdAt);
