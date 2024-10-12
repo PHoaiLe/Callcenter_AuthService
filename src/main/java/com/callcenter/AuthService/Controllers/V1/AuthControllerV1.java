@@ -1,11 +1,15 @@
 package com.callcenter.AuthService.Controllers.V1;
 
 import com.callcenter.AuthService.Constants.AccountRegisterTypeEnum;
-import com.callcenter.AuthService.DTO.Login.ExternalInput.EaPLoginInfoRequest;
+import com.callcenter.AuthService.Constants.Register.RegisterException;
+import com.callcenter.AuthService.Constants.Register.RegisterStatusEnum;
+import com.callcenter.AuthService.DTO.Login.ExternalInput.EaPSignInInfoRequest;
 import com.callcenter.AuthService.DTO.Register.ExternalInput.EaPRegisterInfoRequest;
 import com.callcenter.AuthService.DTO.Register.ExternalOutput.EaPRegisterInfoResponse;
 import com.callcenter.AuthService.DTO.Register.InternalInput.EaPAccountRegisterInput;
 import com.callcenter.AuthService.DTO.Register.RegisterResult;
+import com.callcenter.AuthService.DTO.ServiceResult;
+import com.callcenter.AuthService.Entities.AccountEntity;
 import com.callcenter.AuthService.Services.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -56,11 +60,20 @@ public class AuthControllerV1
                 registerInput.setRoleValue(providedInfo.roleValue());
                 registerInput.setRegisterType(AccountRegisterTypeEnum.EAP_AUTHENTICATION.getValue());
 
-                RegisterResult serviceResult = accountService.create(registerInput);
+                try
+                {
+                    ServiceResult<AccountEntity> serviceResult = accountService.create(registerInput);
 
-                //prepare the final response
-                response.setStatusCode(serviceResult.getStatusCode());
-                response.setMessage(serviceResult.getMessage());
+                    response.setStatusCode(RegisterStatusEnum.SUCCESS.getStatusCode());
+                    response.setMessage(RegisterStatusEnum.SUCCESS.getMessage());
+                }
+                catch(RegisterException registerException)
+                {
+                    RegisterStatusEnum value = registerException.getValue();
+                    response.setMessage(value.getMessage());
+                    response.setStatusCode(value.getStatusCode());
+                }
+
 
                 ResponseEntity apiResponse = new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getStatusCode()));
 
@@ -72,7 +85,7 @@ public class AuthControllerV1
     }
 
     @PostMapping(value = "/login/standard")
-    public CompletableFuture<ResponseEntity> loginByEaPAuthentication(@RequestBody EaPLoginInfoRequest provideInfo)
+    public CompletableFuture<ResponseEntity> loginByEaPAuthentication(@RequestBody EaPSignInInfoRequest provideInfo)
     {
         CompletableFuture<ResponseEntity> asyncResult = CompletableFuture.supplyAsync(new Supplier<ResponseEntity>() {
             @Override

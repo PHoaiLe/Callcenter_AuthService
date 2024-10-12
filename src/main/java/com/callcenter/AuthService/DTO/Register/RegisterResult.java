@@ -21,18 +21,18 @@ public class RegisterResult extends ServiceResult
         super(isSuccess);
     }
 
-    public RegisterResult(boolean isSuccess, int statusCode)
+    public RegisterResult(boolean isSuccess, Object object)
     {
-        super(isSuccess, statusCode);
+        super(isSuccess, object);
     }
 
-    public RegisterResult(boolean isSuccess, int statusCode, String message)
-    {
-        super(isSuccess, statusCode, message);
+    @Override
+    public void setSuccess(boolean isSuccess) {
+        super.setSuccess(isSuccess);
     }
 
-    public RegisterResult(boolean isSuccess, HttpStatusCode statusCode, String message)
-    {
-        super(isSuccess, statusCode, message);
+    @Override
+    public void setObject(Object object) {
+        super.setObject(object);
     }
 }

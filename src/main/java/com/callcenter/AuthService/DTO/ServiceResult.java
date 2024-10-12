@@ -1,59 +1,33 @@
 package com.callcenter.AuthService.DTO;
 
-import com.callcenter.AuthService.Constants.DefinedAPIStatus;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 
 @Data
 @Setter
 @Getter
-public class ServiceResult
+public class ServiceResult<T>
 {
     protected boolean isSuccess;
-    protected int statusCode;
-    protected String message;
+    protected T object;
 
     public ServiceResult()
     {
         this.isSuccess = false;
-        this.statusCode = HttpStatus.NOT_IMPLEMENTED.value();
-        this.message = "";
+        this.object = null;
     }
 
     public ServiceResult(boolean isSuccess)
     {
         this.isSuccess = isSuccess;
-        this.statusCode = HttpStatus.NOT_IMPLEMENTED.value();
-        this.message = "";
+        this.object = null;
     }
 
-    public ServiceResult(boolean isSuccess, int statusCode)
+    public ServiceResult(boolean isSuccess, T object)
     {
         this.isSuccess = isSuccess;
-        this.statusCode = statusCode;
-        this.message = "";
+        this.object = object;
     }
 
-    public ServiceResult(boolean isSuccess, int statusCode, String message)
-    {
-        this.isSuccess = isSuccess;
-        this.statusCode = statusCode;
-        this.message = message;
-    }
-
-    public ServiceResult(boolean isSuccess, HttpStatusCode statusCode, String message)
-    {
-        this.isSuccess = isSuccess;
-        this.statusCode = statusCode.value();
-        this.message = message;
-    }
-
-    public void setHttpResult(DefinedAPIStatus apiStatus)
-    {
-        this.statusCode = apiStatus.statusCode().value();
-        this.message = apiStatus.message();
-    }
 }

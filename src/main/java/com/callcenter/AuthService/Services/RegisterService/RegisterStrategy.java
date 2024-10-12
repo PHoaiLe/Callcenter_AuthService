@@ -1,5 +1,6 @@
 package com.callcenter.AuthService.Services.RegisterService;
 
+import com.callcenter.AuthService.Constants.Register.RegisterException;
 import com.callcenter.AuthService.DTO.Register.RegisterStrategyResult;
 import com.callcenter.AuthService.DTO.Register.RegisterInput;
 
@@ -48,6 +49,6 @@ public abstract class RegisterStrategy<R extends RegisterStrategyResult, I exten
     }
 
     abstract public RegisterStrategy initializes();
-    abstract public R register(I input);
+    abstract public R register(I input) throws RegisterException;
     abstract public void rollback(String recordId);
 }

@@ -9,33 +9,21 @@ import org.springframework.http.HttpStatusCode;
 @Data
 @Getter
 @Setter
-public class EaPAccountRegisterStrategyResult extends RegisterStrategyResult
-{
+public class EaPAccountRegisterStrategyResult extends RegisterStrategyResult {
     private String email;
     private String password;
 
-    @Override
-    public boolean isSuccess() {
-        return super.isSuccess();
-    }
-
-    @Override
-    public String getMessage() {
-        return super.getMessage();
-    }
-
-    @Override
-    public int getStatusCode() {
-        return super.getStatusCode();
-    }
-
-    @Override
-    public void setStatusCode(int statusCode) {
-        super.setStatusCode(statusCode);
-    }
-
-    public void setStatusCode(HttpStatusCode statusCode)
+    public EaPAccountRegisterStrategyResult(String recordId)
     {
-        super.setStatusCode(statusCode.value());
+        super(recordId);
+        this.email = null;
+        this.password = null;
+    }
+
+    public EaPAccountRegisterStrategyResult(String email, String password, String recordId)
+    {
+        super(recordId);
+        this.email = email;
+        this.password = password;
     }
 }

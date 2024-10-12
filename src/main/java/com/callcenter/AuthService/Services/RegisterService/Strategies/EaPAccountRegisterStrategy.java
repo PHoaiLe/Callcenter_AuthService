@@ -1,6 +1,6 @@
 package com.callcenter.AuthService.Services.RegisterService.Strategies;
 
-import com.callcenter.AuthService.Constants.Register.RegisterStatusConstants;
+import com.callcenter.AuthService.Constants.Register.RegisterException;
 import com.callcenter.AuthService.DTO.Register.InternalInput.EaPAccountRegisterInput;
 import com.callcenter.AuthService.DTO.Register.InternalOutput.EaPAccountRegisterStrategyResult;
 import com.callcenter.AuthService.Entities.EmailPasswordAuthenticationEntity;
@@ -9,12 +9,8 @@ import com.callcenter.AuthService.Repositories.EmailPasswordRepository;
 import com.callcenter.AuthService.Services.RegisterService.RegisterStrategy;
 import com.callcenter.AuthService.Support.Password.SupportPasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
 import java.util.Optional;
 
 @Service
@@ -55,20 +51,16 @@ public class EaPAccountRegisterStrategy extends RegisterStrategy<EaPAccountRegis
     }
 
     @Override
-    public EaPAccountRegisterStrategyResult register(EaPAccountRegisterInput input)
+    public EaPAccountRegisterStrategyResult register(EaPAccountRegisterInput input) throws RegisterException
     {
         System.out.println("Email & Password Strategy");
-        EaPAccountRegisterStrategyResult result = new EaPAccountRegisterStrategyResult();
 
         Optional<EmailPasswordAuthenticationEntity> optionalEmailPasswordAuthenticationEntity = emailPasswordRepository.findByEmail(input.getEmail());
 
         //the email has already been registered, force to use new email
         if(optionalEmailPasswordAuthenticationEntity.isEmpty() == false)
         {
-            result.setRecordId(null);
-            result.setSuccess(false);
-            result.setHttpResult(RegisterStatusConstants.EMAIL_ALREADY_USED);
-            return result;
+            throw RegisterException.EMAIL_ALREADY_USED;
         }
 
         //encode the password
@@ -80,11 +72,7 @@ public class EaPAccountRegisterStrategy extends RegisterStrategy<EaPAccountRegis
 
         EmailPasswordAuthenticationEntity createdRecord = emailPasswordRepository.save(newEntityRecord);
 
-        result.setRecordId(createdRecord.getId());
-        result.setEmail(newEntityRecord.getEmail());
-        result.setPassword(newEntityRecord.getPassword());
-        result.setSuccess(true);
-        result.setHttpResult(RegisterStatusConstants.SUCCESS);
+        EaPAccountRegisterStrategyResult result = new EaPAccountRegisterStrategyResult(createdRecord.getId());
 
         return result;
     }
