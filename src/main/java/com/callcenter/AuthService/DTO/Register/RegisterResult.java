@@ -1,6 +1,7 @@
 package com.callcenter.AuthService.DTO.Register;
 
 import com.callcenter.AuthService.DTO.ServiceResult;
+import com.callcenter.AuthService.Entities.AccountEntity;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,30 +10,17 @@ import org.springframework.http.HttpStatusCode;
 @Data
 @Getter
 @Setter
-public class RegisterResult extends ServiceResult
+public class RegisterResult
 {
+    AccountEntity accountEntity;
+
     public RegisterResult()
     {
-        super();
+        this.accountEntity = null;
     }
 
-    public RegisterResult(boolean isSuccess)
+    public RegisterResult(AccountEntity accountEntity)
     {
-        super(isSuccess);
-    }
-
-    public RegisterResult(boolean isSuccess, Object object)
-    {
-        super(isSuccess, object);
-    }
-
-    @Override
-    public void setSuccess(boolean isSuccess) {
-        super.setSuccess(isSuccess);
-    }
-
-    @Override
-    public void setObject(Object object) {
-        super.setObject(object);
+        this.accountEntity = accountEntity;
     }
 }

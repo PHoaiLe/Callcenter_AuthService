@@ -3,13 +3,16 @@ package com.callcenter.AuthService.Controllers.V1;
 import com.callcenter.AuthService.Constants.AccountRegisterTypeEnum;
 import com.callcenter.AuthService.Constants.Register.RegisterException;
 import com.callcenter.AuthService.Constants.Register.RegisterStatusEnum;
-import com.callcenter.AuthService.DTO.Login.ExternalInput.EaPSignInInfoRequest;
+import com.callcenter.AuthService.Constants.SignIn.SignInException;
+import com.callcenter.AuthService.Constants.SignIn.SignInStatusEnum;
+import com.callcenter.AuthService.DTO.SignIn.ExternalInput.EaPSignInInfoRequest;
 import com.callcenter.AuthService.DTO.Register.ExternalInput.EaPRegisterInfoRequest;
 import com.callcenter.AuthService.DTO.Register.ExternalOutput.EaPRegisterInfoResponse;
 import com.callcenter.AuthService.DTO.Register.InternalInput.EaPAccountRegisterInput;
 import com.callcenter.AuthService.DTO.Register.RegisterResult;
 import com.callcenter.AuthService.DTO.ServiceResult;
-import com.callcenter.AuthService.Entities.AccountEntity;
+import com.callcenter.AuthService.DTO.SignIn.ExternalOutput.EaPSignInResponse;
+import com.callcenter.AuthService.DTO.SignIn.SignInResult;
 import com.callcenter.AuthService.Services.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -50,7 +53,7 @@ public class AuthControllerV1
             public ResponseEntity get() {
 
                 //initialize api response
-                EaPRegisterInfoResponse response = new EaPRegisterInfoResponse(HttpStatus.OK, "");
+                EaPRegisterInfoResponse response = new EaPRegisterInfoResponse(RegisterStatusEnum.SUCCESS);
 
                 //service task
                 //initialize input
@@ -62,16 +65,13 @@ public class AuthControllerV1
 
                 try
                 {
-                    ServiceResult<AccountEntity> serviceResult = accountService.create(registerInput);
+                    ServiceResult<RegisterResult> serviceResult = accountService.create(registerInput);
 
-                    response.setStatusCode(RegisterStatusEnum.SUCCESS.getStatusCode());
-                    response.setMessage(RegisterStatusEnum.SUCCESS.getMessage());
+                    response.setStatusAndMessage(RegisterStatusEnum.SUCCESS);
                 }
                 catch(RegisterException registerException)
                 {
-                    RegisterStatusEnum value = registerException.getValue();
-                    response.setMessage(value.getMessage());
-                    response.setStatusCode(value.getStatusCode());
+                    response.setStatusAndMessage(registerException.getValue());
                 }
 
 
@@ -91,8 +91,27 @@ public class AuthControllerV1
             @Override
             public ResponseEntity get()
             {
-                
-                return null;
+                EaPSignInResponse response = new EaPSignInResponse(SignInStatusEnum.SUCCESS);
+
+                try
+                {
+                    ServiceResult<SignInResult> serviceResult = accountService.signInByEmailPassword(provideInfo);
+                    SignInResult signInResult = serviceResult.getObject();
+
+                    response.setAccessToken(signInResult.getAccessToken());
+                    response.setAccessTokenExpiration(signInResult.getAccessTokenExpiration());
+                    response.setRefreshToken(signInResult.getRefreshToken());
+                    response.setRefreshTokenExpiration(signInResult.getRefreshTokenExpiration());
+                    response.setStatusAndMessage(SignInStatusEnum.SUCCESS);
+                }
+                catch (SignInException signInException)
+                {
+                    response.setStatusAndMessage(signInException.getValue());
+                }
+
+                ResponseEntity apiResponse = new ResponseEntity(response, HttpStatusCode.valueOf(response.getStatusCode()));
+
+                return apiResponse;
             }
         });
 

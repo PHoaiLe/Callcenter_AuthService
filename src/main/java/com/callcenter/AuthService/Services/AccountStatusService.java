@@ -1,4 +1,4 @@
-package com.callcenter.AuthService.Services.AccountStatusService;
+package com.callcenter.AuthService.Services;
 
 import com.callcenter.AuthService.Constants.AccountStatusEnum;
 import com.callcenter.AuthService.Entities.AccountStatusEntity;

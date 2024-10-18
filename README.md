@@ -25,6 +25,7 @@ from the client are sent through the services in a business executing process by
 This time, a self-study project, we are going to alter some components depending on the Firebase services and also the Firebase Database 
 by self-implementation elements that provide the same roles/functions. Obviously, although this creates some problems/questions that we have to solve in the process of implementation,
 it also gives us chances to face some challenges that we were lucky to be solved by third-party services.
+<br/>
 
 ## Expectations
 As a self-study project, the intended aim is to concentrate on a well-built service as much as possible that can be applied in the production environment, 
@@ -41,3 +42,20 @@ I'm also willing to learn and apply new technologies to this project to improve 
 <br/>
 
 ## Requirements
+
+- Create a service that can accept multiple ways of authentication. At the beginning, the service provides an email-password authentication method. In the future, however,
+the service can give the ability to scale the authentication method without affecting the current implementation. Each
+method may require different schema to handle its own business, which requires the service can adapt a new schema and easily adjust it into the schema used
+for account storage.
+- Authorization without the estimated amount of roles. In reality, when a system becomes larger or provides services to external consumers, it brings a challenge to the Auth service
+that must handle the larger amount of roles or permissions inserted. It is not ideal to change or refactor on-working features for adding new roles or looking into each API to replace
+the current logical flow every time one role be considered.
+- Applying refresh token rotation implementation, which adapts requirements at basic level.
+- Handle multiple requests, apply Non-blocking I/O
+- Verify token or authorization via gRPC
+- Implement clean, scalable, easily maintained source code
+- 
+- (*) Requirements will be improved later
+- <br/>
+
+## Approach

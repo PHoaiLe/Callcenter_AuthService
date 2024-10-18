@@ -37,8 +37,9 @@ public class AccountEntity
     @NonNull
     protected Integer register_type;
     protected Date created_at;
+    protected Integer role;
 
-    public static AccountEntity getInstance(String authInfoId, Integer status, Integer registerType, Date createdAt)
+    public static AccountEntity getInstance(String authInfoId, Integer status, Integer registerType, Date createdAt, Integer role)
     {
         AccountEntity newEntity = new AccountEntity();
 
@@ -50,6 +51,7 @@ public class AccountEntity
         newEntity.setStatus(status);
         newEntity.setRegister_type(registerType);
         newEntity.setCreated_at(createdAt);
+        newEntity.setRole(role);
 
         return newEntity;
     }

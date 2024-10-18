@@ -1,4 +1,4 @@
-package com.callcenter.AuthService.Services.AccountRoleService;
+package com.callcenter.AuthService.Services;
 
 import com.callcenter.AuthService.Constants.AccountRegisterTypeEnum;
 import com.callcenter.AuthService.Entities.RoleEntity;

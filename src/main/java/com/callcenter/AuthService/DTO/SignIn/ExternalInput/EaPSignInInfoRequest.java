@@ -1,4 +1,4 @@
-package com.callcenter.AuthService.DTO.Login.ExternalInput;
+package com.callcenter.AuthService.DTO.SignIn.ExternalInput;
 
 import lombok.NonNull;
 

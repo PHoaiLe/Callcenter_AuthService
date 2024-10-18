@@ -1,6 +1,13 @@
 server:
   port: ${SERVER_PORT}
 
+secret:
+  jwt:
+    access_token_secret_key: ${ACCESS_TOKEN_SECRET_KEY}
+    access_token_expiration: ${ACCESS_TOKEN_EXPIRATION}
+    refresh_token_secret_key: ${REFRESH_TOKEN_SECRET_KEY}
+    refresh_token_expiration: ${REFRESH_TOKEN_EXPIRATION}
+
 spring:
   profile:
     active: dev

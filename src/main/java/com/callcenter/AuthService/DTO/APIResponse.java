@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 
 @Data
-public class APIResponse
+public abstract class APIResponse<TYPE_OF_RESPONSE_ENUM>
 {
     private int statusCode;
     private String message;
@@ -32,7 +32,7 @@ public class APIResponse
         this.statusCode = statusCode;
     }
 
-    public void setStatusCode(HttpStatusCode statusCode) {
+    protected void setStatusCode(HttpStatusCode statusCode) {
         this.statusCode = statusCode.value();
     }
 
@@ -45,4 +45,6 @@ public class APIResponse
     {
         return this.statusCode;
     }
+
+    public abstract void setStatusAndMessage(TYPE_OF_RESPONSE_ENUM statusEnum);
 }

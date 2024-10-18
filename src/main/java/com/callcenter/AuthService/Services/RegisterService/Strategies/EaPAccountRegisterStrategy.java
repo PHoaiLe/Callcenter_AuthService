@@ -7,7 +7,7 @@ import com.callcenter.AuthService.Entities.EmailPasswordAuthenticationEntity;
 import com.callcenter.AuthService.Repositories.AccountRepository;
 import com.callcenter.AuthService.Repositories.EmailPasswordRepository;
 import com.callcenter.AuthService.Services.RegisterService.RegisterStrategy;
-import com.callcenter.AuthService.Support.Password.SupportPasswordEncoder;
+import com.callcenter.AuthService.Support.Password.SupportPasswordProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,16 +20,16 @@ public class EaPAccountRegisterStrategy extends RegisterStrategy<EaPAccountRegis
 
     private AccountRepository accountRepository;
     private EmailPasswordRepository emailPasswordRepository;
-    private SupportPasswordEncoder supportPasswordEncoder;
+    private SupportPasswordProvider supportPasswordProvider;
 
     @Autowired
     public EaPAccountRegisterStrategy(AccountRepository accountRepository, EmailPasswordRepository emailPasswordRepository,
-                                      SupportPasswordEncoder supportPasswordEncoder)
+                                      SupportPasswordProvider supportPasswordProvider)
     {
         super(inputClassToHandle.getName(), inputClassToHandle);
         this.accountRepository = accountRepository;
         this.emailPasswordRepository = emailPasswordRepository;
-        this.supportPasswordEncoder = supportPasswordEncoder;
+        this.supportPasswordProvider = supportPasswordProvider;
     }
 
     @Override
@@ -64,7 +64,7 @@ public class EaPAccountRegisterStrategy extends RegisterStrategy<EaPAccountRegis
         }
 
         //encode the password
-        String encodedPassword = this.supportPasswordEncoder.encodeByBcrypt(input.getPassword());
+        String encodedPassword = this.supportPasswordProvider.encodeByBcrypt(input.getPassword());
 
         EmailPasswordAuthenticationEntity newEntityRecord = EmailPasswordAuthenticationEntity.getInstance(
                 input.getEmail(), encodedPassword

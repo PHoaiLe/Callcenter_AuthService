@@ -3,23 +3,26 @@ package com.callcenter.AuthService.Services;
 import com.callcenter.AuthService.Constants.AccountRoleEnum;
 import com.callcenter.AuthService.Constants.AccountStatusEnum;
 import com.callcenter.AuthService.Constants.Register.RegisterException;
-import com.callcenter.AuthService.DTO.Login.ExternalInput.EaPSignInInfoRequest;
+import com.callcenter.AuthService.Constants.SignIn.SignInException;
+import com.callcenter.AuthService.DTO.JWT.JwtGeneratedToken;
+import com.callcenter.AuthService.DTO.SignIn.ExternalInput.EaPSignInInfoRequest;
 import com.callcenter.AuthService.DTO.Register.RegisterStrategyResult;
 import com.callcenter.AuthService.DTO.Register.RegisterInput;
 import com.callcenter.AuthService.DTO.Register.RegisterResult;
 import com.callcenter.AuthService.DTO.ServiceResult;
+import com.callcenter.AuthService.DTO.SignIn.SignInResult;
 import com.callcenter.AuthService.Entities.AccountEntity;
 import com.callcenter.AuthService.Entities.EmailPasswordAuthenticationEntity;
 import com.callcenter.AuthService.Repositories.AccountRepository;
 import com.callcenter.AuthService.Repositories.EmailPasswordRepository;
-import com.callcenter.AuthService.Services.AccountRegisterType.AccountRegisterTypeService;
-import com.callcenter.AuthService.Services.AccountStatusService.AccountStatusService;
+import com.callcenter.AuthService.Services.Events.AccountEventPublisher;
+import com.callcenter.AuthService.Services.Events.RefreshTokenRecordingEvent.RefreshTokenEventProp;
+import com.callcenter.AuthService.Services.JwtService.JwtService;
 import com.callcenter.AuthService.Services.RegisterService.RegisterServiceProviderV2;
 import com.callcenter.AuthService.Services.RegisterService.RegisterStrategy;
-import com.callcenter.AuthService.Services.AccountRoleService.AccountRoleService;
+import com.callcenter.AuthService.Support.Password.SupportPasswordProvider;
 import jakarta.annotation.Nullable;
 import lombok.NonNull;
-import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -36,8 +39,10 @@ public class AccountService
     private AccountRegisterTypeService accountRegisterTypeService;
     private AccountStatusService accountStatusService;
     private EmailPasswordRepository emailPasswordRepository;
-    private Logger logger;
+    private SupportPasswordProvider supportPasswordProvider;
+    private JwtService jwtService;
 
+    private AccountEventPublisher accountEventPublisher;
 
     public AccountService()
     {}
@@ -46,7 +51,8 @@ public class AccountService
     public AccountService(RegisterServiceProviderV2 registerServiceProviderV2, AccountRepository accountRepository,
                           AccountRoleService roleService, AccountRegisterTypeService accountRegisterTypeService,
                           AccountStatusService accountStatusService, EmailPasswordRepository emailPasswordRepository,
-                          Logger logger)
+                          SupportPasswordProvider supportPasswordProvider, JwtService jwtService,
+                          AccountEventPublisher accountEventPublisher)
     {
         this.registerServiceProviderV2 = registerServiceProviderV2;
         this.accountRepository = accountRepository;
@@ -54,7 +60,9 @@ public class AccountService
         this.accountRegisterTypeService = accountRegisterTypeService;
         this.accountStatusService = accountStatusService;
         this.emailPasswordRepository = emailPasswordRepository;
-        this.logger = logger;
+        this.supportPasswordProvider = supportPasswordProvider;
+        this.jwtService = jwtService;
+        this.accountEventPublisher = accountEventPublisher;
     }
 
     protected AccountEntity createAccountRecord(
@@ -67,7 +75,7 @@ public class AccountService
         }
 
         try {
-            AccountEntity entity = AccountEntity.getInstance(authInfoId, status, registerType, currentDate);
+            AccountEntity entity = AccountEntity.getInstance(authInfoId, status, registerType, currentDate, role);
             return accountRepository.save(entity);
         }
         catch (Exception exception)
@@ -76,10 +84,8 @@ public class AccountService
         }
     }
 
-    public <SR extends ServiceResult, RSR extends RegisterStrategyResult, I extends RegisterInput> RegisterResult create (I input) throws RegisterException
+    public <RSR extends RegisterStrategyResult, I extends RegisterInput> ServiceResult create (I input) throws RegisterException
     {
-        RegisterResult finalResult = new RegisterResult();
-
         //get the role's id by using AccountRoleService
         Integer roleId = roleService.getRoleId(input.getRoleValue());
         if(roleId == null || roleId == roleService.getRoleId(AccountRoleEnum.ADMIN.getValue()))
@@ -110,25 +116,63 @@ public class AccountService
         try
         {
             AccountEntity newAccountEntity = createAccountRecord(authInfoId, roleId, statusId, registerTypeId, null);
-            finalResult.setSuccess(true);
-            finalResult.setObject(newAccountEntity);
+            ServiceResult<RegisterResult> serviceResult = new ServiceResult<>();
+            serviceResult.setObject(new RegisterResult(newAccountEntity));
+            serviceResult.setSuccess(true);
+
+            return serviceResult;
         }
         catch (Exception exception)
         {
-            logger.error(exception.getMessage());
+            System.out.println(exception);
             throw RegisterException.VIOLATION_IN_CREDENTIALS_TO_CREATE_ACCOUNT;
         }
-
-        return finalResult;
     }
 
-    public void signInByEmailPassword(EaPSignInInfoRequest request)
+    public ServiceResult<SignInResult> signInByEmailPassword(EaPSignInInfoRequest request) throws SignInException
     {
-        Optional< EmailPasswordAuthenticationEntity> authenticationEntity = this.emailPasswordRepository.findByEmail(request.email());
-//        if(authenticationEntity.isEmpty())
-//        {
-//            throw
-//        }
+        Optional< EmailPasswordAuthenticationEntity> optionalAuthenticationEntity = this.emailPasswordRepository.findByEmail(request.email());
+        if(optionalAuthenticationEntity.isEmpty())
+        {
+            throw SignInException.INVALID_EMAIL_PASSWORD;
+        }
+
+        EmailPasswordAuthenticationEntity authenticationEntity = optionalAuthenticationEntity.get();
+
+        //validate the password
+        boolean isValidRawPassword = this.supportPasswordProvider.matchByBCrypt(authenticationEntity.getPassword(), request.password());
+        if(isValidRawPassword == false)
+        {
+            throw SignInException.INVALID_EMAIL_PASSWORD;
+        }
+
+        //get account info by using authenticationEntity.getId()
+        Optional<AccountEntity> optionalAccountEntity = accountRepository.findByAuthInfoId(authenticationEntity.getId());
+        if(optionalAccountEntity.isEmpty())
+        {
+            throw SignInException.ACCOUNT_NOT_FOUND;
+        }
+
+        AccountEntity accountEntity = optionalAccountEntity.get();
+        JwtGeneratedToken accessToken = jwtService.generateAccessToken(accountEntity);
+        JwtGeneratedToken refreshToken = jwtService.generateRefreshToken(accountEntity);
+
+        SignInResult signInResult = SignInResult.builder()
+                .accessToken(accessToken.getToken())
+                .accessTokenExpiration(accessToken.getExpiredAt())
+                .refreshToken(refreshToken.getToken())
+                .refreshTokenExpiration(refreshToken.getExpiredAt())
+                .build();
+
+        ServiceResult serviceResult = new ServiceResult<>(true, signInResult);
+
+//        System.out.println(Thread.currentThread());
+
+        //publish an event to execute background task of recording refresh token
+        RefreshTokenEventProp eventProp = new RefreshTokenEventProp(accountEntity.getId(), refreshToken.getToken(), refreshToken.getIssuedAt(), refreshToken.getExpiredAt());
+        accountEventPublisher.publishEvent(eventProp);
+
+        return serviceResult;
     }
 
 }

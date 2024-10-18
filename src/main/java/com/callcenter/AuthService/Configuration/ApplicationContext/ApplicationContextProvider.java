@@ -1,4 +1,4 @@
-package com.callcenter.AuthService.Support.ApplicationContext;
+package com.callcenter.AuthService.Configuration.ApplicationContext;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;

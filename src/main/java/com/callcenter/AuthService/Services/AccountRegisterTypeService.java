@@ -1,4 +1,4 @@
-package com.callcenter.AuthService.Services.AccountRegisterType;
+package com.callcenter.AuthService.Services;
 
 
 import com.callcenter.AuthService.Constants.AccountRegisterTypeEnum;
