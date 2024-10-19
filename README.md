@@ -20,7 +20,7 @@ This approach provided fast and convenient solution for us to quickly apply into
 process and meet requirements of the course at that time.
 
 ### Why I make this Auth Service repository?
-Since the [callcenter_microservices](https://github.com/PHoaiLe/call_center_microservices) focused on how services/components in the system connect together and the way that requests/messages 
+Since the **[callcenter_microservices](https://github.com/PHoaiLe/call_center_microservices)** focused on how services/components in the system connect together and the way that requests/messages 
 from the client are sent through the services in a business executing process by applying Event-Driven Architecture thanks to Apache Kafka implementation.
 This time, a self-study project, we are going to alter some components depending on the Firebase services and also the Firebase Database 
 by self-implementation elements that provide the same roles/functions. Obviously, although this creates some problems/questions that we have to solve in the process of implementation,
@@ -59,3 +59,39 @@ the current logical flow every time one role be considered.
 - <br/>
 
 ## Approach
+At the first requirement, we mentioned the scalability of the authentication method the service is expected to provide.
+<br/>**Why do we need this ability?**<br/>
+At the beginning of the process, our service may need to serve one method, the simplest one, email-password authentication. With the natural approach, we can define an Account table that
+each record has email and password attribute. However, if the service need to extend authentication method, this approach forces us to redefine the account table since each authentication
+may require specific storage information for logical and business execution.
+
+One of solution suggested is that we separate authentication information to tables, which store their own information. The account table now will serve an attribute called **"auth_info_id"**
+that refer to authentication tables according to defined condition implemented.
+
+![redefined account table](./images/account_table_v1.jpg)
+
+Consequently, the service provides the ability to scale on the number of authentication methods without redefined existing tables. For each new method added, changed, or removed, we only execute
+on a separate feature, this won't affect other features in the database and the source code become more flexible by applying suitable design patterns.
+
+Moreover, we also design tables as Role, Permission, Role_Permission to apply role-permission access control. Since the service is intentionally separated auth service, its goal is to provide
+remote access control or authorization properly via tokens sent to client services when they send authentication request to the service.
+
+![tables serve for role-permission access control](./images/role_permission_access_control.jpg)
+
+And we added a table called **"Permission-be-limited-of-accounts-for-some-issues Table"** or **"banned-permission"** for short. In some regular use cases like a just-created account, we want to prohibit or limit
+some permissions, features or simply some APIs, we do not want to allow a just-created account of a driver to receive and accept booking request from customers until he/she provide the driving license information which
+is required to activate a driver's account.
+
+![table of banned permission](./images/banned_permission.jpg)
+
+-- This is the first version of **Permission-be-limited-of-accounts-for-some-issues Table** :)) -- We will improve and update this document later
+
+In addition, to serve the refresh token rotation feature, the database should provide a table to store and manage generated refresh tokens when the service receives authentication requests or refresh-token requests.
+The record concentrates on what is the token generated, which account the token belong to, the issued time, expiration, the used time of the token. This is the initialized level and customized version which is based
+on reference of refresh token rotation.
+
+![refresh token reotation](./images/refresh_token_table.jpg)
+
+The general relationship of featured tables in the database is provided below
+
+![relationships of tables in the database](./images/tables_v1.jpg)
