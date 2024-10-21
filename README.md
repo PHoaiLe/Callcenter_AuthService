@@ -42,6 +42,8 @@ I'm also willing to learn and apply new technologies to this project to improve 
 <br/>
 
 ## Requirements
+<details>
+<summary>Detail</summary>
 
 - Create a service that can accept multiple ways of authentication. At the beginning, the service provides an email-password authentication method. In the future, however,
 the service can give the ability to scale the authentication method without affecting the current implementation. Each
@@ -57,41 +59,93 @@ the current logical flow every time one role be considered.
 - 
 - (*) Requirements will be improved later
 - <br/>
+</details>
 
 ## Approach
-At the first requirement, we mentioned the scalability of the authentication method the service is expected to provide.
-<br/>**Why do we need this ability?**<br/>
-At the beginning of the process, our service may need to serve one method, the simplest one, email-password authentication. With the natural approach, we can define an Account table that
-each record has email and password attribute. However, if the service need to extend authentication method, this approach forces us to redefine the account table since each authentication
-may require specific storage information for logical and business execution.
 
-One of solution suggested is that we separate authentication information to tables, which store their own information. The account table now will serve an attribute called **"auth_info_id"**
-that refer to authentication tables according to defined condition implemented.
+### How to adapt scalability of authentication method
+<details>
+<summary>Solution and explanation</summary>
 
-![redefined account table](./images/account_table_v1.jpg)
+-   At the first requirement, we mentioned the scalability of the authentication method the service is expected to provide.
+    <br/>**Why do we need this ability?**<br/>
+    At the beginning of the process, our service may need to serve one method, the simplest one, email-password authentication. With the natural approach, we can define an Account table that
+    each record has email and password attribute. However, if the service need to extend authentication method, this approach forces us to redefine the account table since each authentication
+    may require specific storage information for logical and business execution.
+    
+    One of solution suggested is that we separate authentication information to tables, which store their own information. The account table now will serve an attribute called **"auth_info_id"**
+    that refer to authentication tables according to defined condition implemented.
 
-Consequently, the service provides the ability to scale on the number of authentication methods without redefined existing tables. For each new method added, changed, or removed, we only execute
-on a separate feature, this won't affect other features in the database and the source code become more flexible by applying suitable design patterns.
+    ![redefined account table](./images/account_table_v1.jpg)
+    
+    Consequently, the service provides the ability to scale on the number of authentication methods without redefined existing tables. For each new method added, changed, or removed, we only execute
+    on a separate feature, this won't affect other features in the database and the source code become more flexible by applying suitable design patterns.
 
-Moreover, we also design tables as Role, Permission, Role_Permission to apply role-permission access control. Since the service is intentionally separated auth service, its goal is to provide
-remote access control or authorization properly via tokens sent to client services when they send authentication request to the service.
+</details>
 
-![tables serve for role-permission access control](./images/role_permission_access_control.jpg)
+### Flexible authorization support
 
-And we added a table called **"Permission-be-limited-of-accounts-for-some-issues Table"** or **"banned-permission"** for short. In some regular use cases like a just-created account, we want to prohibit or limit
-some permissions, features or simply some APIs, we do not want to allow a just-created account of a driver to receive and accept booking request from customers until he/she provide the driving license information which
-is required to activate a driver's account.
+<details>
+    <summary><a>Version 1</a></summary>
 
-![table of banned permission](./images/banned_permission.jpg)
+-   Moreover, we also design tables as Role, Permission, Role_Permission to apply role-permission access control. Since the service is intentionally separated auth service, its goal is to provide 
+    remote access control or authorization properly via tokens sent to client services when they send authentication request to the service.
 
--- This is the first version of **Permission-be-limited-of-accounts-for-some-issues Table** :)) -- We will improve and update this document later
+    ![tables serve for role-permission access control](./images/role_permission_access_control.jpg)
 
-In addition, to serve the refresh token rotation feature, the database should provide a table to store and manage generated refresh tokens when the service receives authentication requests or refresh-token requests.
-The record concentrates on what is the token generated, which account the token belong to, the issued time, expiration, the used time of the token. This is the initialized level and customized version which is based
-on reference of refresh token rotation.
+    And we added a table called **"Permission-be-limited-of-accounts-for-some-issues Table"** or **"banned-permission"** for short. In some regular use cases like a just-created account, we want to prohibit or limit
+    some permissions, features or simply some APIs, we do not want to allow a just-created account of a driver to receive and accept booking request from customers until he/she provide the driving license information which
+    is required to activate a driver's account.
 
-![refresh token reotation](./images/refresh_token_table.jpg)
+    ![table of banned permission](./images/banned_permission.jpg)
+    
+    This is the first version of **Permission-be-limited-of-accounts-for-some-issues Table** :)) We will improve and update this document later
+    
+    In addition, to serve the refresh token rotation feature, the database should provide a table to store and manage generated refresh tokens when the service receives authentication requests or refresh-token requests.
+    The record concentrates on what is the token generated, which account the token belong to, the issued time, expiration, the used time of the token. This is the initialized level and customized version which is based
+    on reference of refresh token rotation.
 
-The general relationship of featured tables in the database is provided below
+    ![refresh token reotation](./images/refresh_token_table.jpg)
+    
+    The general relationship of featured tables in the database is provided below
+    ![relationships of tables in the database](./images/tables_v1.jpg)
 
-![relationships of tables in the database](./images/tables_v1.jpg)
+</details>
+
+<details open>
+    <summary><a>Version 2</a></summary>
+
+-   At the first version (Version 1 of Flexible authorization support), we saw that the Role_to_permission table will contain huge amount of record which used to map permissions to roles
+    Thing works well until we meet this use case. First, if we have Customer_Role to indicate basic level of a customer, we want to have upper levels as BronzerCustomer_Role, SilverCustomer_Role, .etc
+    
+    Now, if the role Customer_Role has a per_A permission, will the BronzerCustomer_Role define per_A in the Role_to_permission table?
+    
+    #### Role_to_permission table
+
+    - Customer_Role's ID is 1 <br/>
+    - BronzerCustomer_Role's ID is 2
+    - BronzerCustomer_Role <font color="blue">extends</font> Customer_Role
+
+    | role_id | permission_id |
+    |---| ---|
+    | 1        | per_A         |
+    | 2        | per_A         |
+    | 2        | per_B         |
+
+    (1) Will we declare explicitly permissions of the extended role?
+
+    (2) Or remove the second row and let implementation in source code handle this? Will the approach (2) assist the scalability and maintenance in the future when someone else looks into the table and modifies
+    the information. In my opinion, we do not think that is a good idea!
+    
+    => Mapping all permissions of roles into a single table make thing becomes complicated and hard to maintain or expand later.<br/>
+    Instead, we would like to introduce a new approach, which may be considered as a more relevant solution for this situation
+    
+    ![Idea of role_permission_access_control version 2](./images/role_permission_access_control_v2_idea.jpg)
+
+[//]: # (    ![role_permission access control version 2]&#40;./images/role_permission_access_control_v2.jpg&#41;)
+
+    
+    
+</details>
+
+## Context and Flows
