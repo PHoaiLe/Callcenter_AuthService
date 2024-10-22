@@ -63,7 +63,7 @@ the current logical flow every time one role be considered.
 
 ## Approach
 
-### How to adapt scalability of authentication method
+### How to adapt multiple authentication methods
 <details>
 <summary>Solution and explanation</summary>
 
@@ -135,16 +135,24 @@ the current logical flow every time one role be considered.
     (1) Will we declare explicitly permissions of the extended role?
 
     (2) Or remove the second row and let implementation in source code handle this? Will the approach (2) assist the scalability and maintenance in the future when someone else looks into the table and modifies
-    the information. In my opinion, we do not think that is a good idea!
+    the information. In our opinion, we do not think that is a good idea!
     
     => Mapping all permissions of roles into a single table make thing becomes complicated and hard to maintain or expand later.<br/>
     Instead, we would like to introduce a new approach, which may be considered as a more relevant solution for this situation
     
     ![Idea of role_permission_access_control version 2](./images/role_permission_access_control_v2_idea.jpg)
-
-[//]: # (    ![role_permission access control version 2]&#40;./images/role_permission_access_control_v2.jpg&#41;)
-
     
+    Here, we suggest to split roles into tables, each table holds a list of permissions which are available for its own role. Moreover, we can define some conditions for each permission defined in the table by adding
+    other attributes.
+    Finally, we reuse the Role table, but this time, the Role table provides a new attribute called "refer_table" that instructs where can we find more details about the role being considered.
+    
+    **A table which stands for a role will hold their permissions, though it can be a child or extended from other role table**<br/>
+
+        BronzerCustomer extend Customer, but the BronzerCustomer table still hold Per_A and Per_B
+    
+    The design of database for this approach is showed below
+
+    ![role_permission access control version 2](./images/role_permission_access_control_v2.jpg)
     
 </details>
 
