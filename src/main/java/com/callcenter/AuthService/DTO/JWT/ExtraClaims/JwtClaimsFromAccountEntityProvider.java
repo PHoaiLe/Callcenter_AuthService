@@ -1,15 +1,15 @@
 package com.callcenter.AuthService.DTO.JWT.ExtraClaims;
 
-import com.callcenter.AuthService.DTO.JWT.JwtExtraClaims;
+import com.callcenter.AuthService.DTO.JWT.JwtClaimsProvider;
 import com.callcenter.AuthService.Entities.AccountEntity;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class JwtClaimsFromAccountEntity extends JwtExtraClaims<AccountEntity, String>
+public class JwtClaimsFromAccountEntityProvider extends JwtClaimsProvider<AccountEntity, String>
 {
 
-    public JwtClaimsFromAccountEntity(AccountEntity accountEntity)
+    public JwtClaimsFromAccountEntityProvider(AccountEntity accountEntity)
     {
         super(accountEntity);
     }
@@ -27,11 +27,13 @@ public class JwtClaimsFromAccountEntity extends JwtExtraClaims<AccountEntity, St
         String randomUUID = UUID.randomUUID().toString();
 
         Map<String, Object> map = new HashMap<>();
-        map.put(JwtExtraClaims.ACCOUNT_ID, this.getKey());
-        map.put(JwtExtraClaims.USER_ROLE, entity.getRole());
-        map.put(JwtExtraClaims.REGISTER_TYPE, entity.getRegister_type());
-        map.put(JwtExtraClaims.NONCE, randomUUID);
+        map.put(JwtClaimsProvider.KEY, this.getKey());
+        map.put(JwtClaimsProvider.USER_ROLE, entity.getRole());
+        map.put(JwtClaimsProvider.REGISTER_TYPE, entity.getRegister_type());
+        map.put(JwtClaimsProvider.NONCE, randomUUID);
 
         return map;
     }
+
+
 }

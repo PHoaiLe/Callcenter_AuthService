@@ -24,6 +24,7 @@ public class ProvidedRefreshTokenEntity
     private Date created_at;
     private Date expired_at;
     private Date used_at;
+    private boolean isAvailable;
 
     private ProvidedRefreshTokenEntity() {}
 
@@ -36,6 +37,7 @@ public class ProvidedRefreshTokenEntity
         this.created_at = created_at;
         this.expired_at = expired_at;
         this.used_at = null;
+        this.isAvailable = true;
     }
 
     public static ProvidedRefreshTokenEntity getInstance(@NonNull String token, @NonNull String account_id,

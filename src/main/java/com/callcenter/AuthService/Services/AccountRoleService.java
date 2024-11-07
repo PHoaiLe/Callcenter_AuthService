@@ -8,12 +8,12 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class AccountRoleService
 {
     private RoleRepository roleRepository;
-    private HashMap<String, RoleEntity> mapOfRoles;
 
     public AccountRoleService() {}
 
@@ -21,52 +21,61 @@ public class AccountRoleService
     public AccountRoleService(RoleRepository roleRepository)
     {
         this.roleRepository = roleRepository;
-
-        initialize();
-    }
-
-    private void initialize()
-    {
-        HashMap<String, RoleEntity> mapOfRoles = new HashMap<>();
-
-        List<RoleEntity> listOfEntities = this.roleRepository.findAll();
-
-        for(RoleEntity entity : listOfEntities)
-        {
-            mapOfRoles.put(entity.getValue(), entity);
-        }
-
-        this.mapOfRoles = mapOfRoles;
     }
 
     public RoleEntity getRoleEntity(AccountRegisterTypeEnum accountRegisterType)
     {
-        return this.mapOfRoles.get(accountRegisterType.getValue());
+        Optional<RoleEntity> optionalRoleEntity = roleRepository.findByValue(accountRegisterType.getValue());
+        if(optionalRoleEntity.isEmpty())
+        {
+            return null;
+        }
+
+        return optionalRoleEntity.get();
     }
 
     public RoleEntity getRoleEntity(String roleValue)
     {
-        return this.mapOfRoles.get(roleValue);
+        Optional<RoleEntity> optionalRoleEntity = roleRepository.findByValue(roleValue);
+        if(optionalRoleEntity.isEmpty())
+        {
+            return null;
+        }
+
+        return optionalRoleEntity.get();
     }
 
     public Integer getRoleId(AccountRegisterTypeEnum accountRegisterType)
     {
-        RoleEntity entity = this.mapOfRoles.get(accountRegisterType.getValue());
-        if(entity == null)
+        Optional<RoleEntity> optionalRoleEntity = roleRepository.findByValue(accountRegisterType.getValue());
+        if(optionalRoleEntity.isEmpty())
         {
             return null;
         }
 
-        return entity.getId();
+        return optionalRoleEntity.get().getId();
     }
 
     public Integer getRoleId(String roleValue)
     {
-        RoleEntity entity = this.mapOfRoles.get(roleValue);
-        if(entity == null)
+        Optional<RoleEntity> optionalRoleEntity = roleRepository.findByValue(roleValue);
+        if(optionalRoleEntity.isEmpty())
         {
             return null;
         }
-        return entity.getId();
+
+        return optionalRoleEntity.get().getId();
     }
+
+    public RoleEntity getRoleEntityById(Integer roleId)
+    {
+        Optional<RoleEntity> optionalRoleEntity = roleRepository.findById(roleId);
+        if(optionalRoleEntity.isEmpty())
+        {
+            return null;
+        }
+
+        return optionalRoleEntity.get();
+    }
+
 }

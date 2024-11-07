@@ -7,14 +7,12 @@ import com.callcenter.AuthService.Repositories.RegisterTypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
+import java.util.Optional;
 
 @Service
 public class AccountRegisterTypeService
 {
     private RegisterTypeRepository registerTypeRepository;
-    private HashMap<String, RegisterTypeEntity> mapOfRegisterTypes;
 
     public AccountRegisterTypeService() {}
 
@@ -22,53 +20,50 @@ public class AccountRegisterTypeService
     public AccountRegisterTypeService(RegisterTypeRepository registerTypeRepository)
     {
         this.registerTypeRepository = registerTypeRepository;
-
-        initialize();
-    }
-
-    private void initialize()
-    {
-        HashMap<String, RegisterTypeEntity> mapOfRegisterTypes = new HashMap<>();
-
-        List<RegisterTypeEntity> listOfEntities = registerTypeRepository.findAll();
-
-        for(RegisterTypeEntity entity: listOfEntities)
-        {
-            mapOfRegisterTypes.put(entity.getValue(), entity);
-        }
-
-        this.mapOfRegisterTypes = mapOfRegisterTypes;
     }
 
     public RegisterTypeEntity getRegisterTypeEntity(AccountRegisterTypeEnum accountRegisterTypeEnum)
     {
-        return this.mapOfRegisterTypes.get(accountRegisterTypeEnum.getValue());
+        Optional<RegisterTypeEntity> optionalRegisterTypeEntity = registerTypeRepository.findByValue(accountRegisterTypeEnum.getValue());
+        if(optionalRegisterTypeEntity.isEmpty())
+        {
+            return null;
+        }
+
+        return optionalRegisterTypeEntity.get();
     }
 
     public RegisterTypeEntity getRegisterTypeEntity(String registerValue)
     {
-        return this.mapOfRegisterTypes.get(registerValue);
+        Optional<RegisterTypeEntity> optionalRegisterTypeEntity = registerTypeRepository.findByValue(registerValue);
+        if(optionalRegisterTypeEntity.isEmpty())
+        {
+            return null;
+        }
+
+        return optionalRegisterTypeEntity.get();
     }
 
     public Integer getRegisterTypeId(AccountRegisterTypeEnum accountRegisterTypeEnum)
     {
-        RegisterTypeEntity entity = this.mapOfRegisterTypes.get(accountRegisterTypeEnum.getValue());
-        if(entity == null)
+        Optional<RegisterTypeEntity> optionalRegisterTypeEntity = registerTypeRepository.findByValue(accountRegisterTypeEnum.getValue());
+        if(optionalRegisterTypeEntity.isEmpty())
         {
             return null;
         }
 
-        return entity.getId();
+        return optionalRegisterTypeEntity.get().getId();
     }
 
     public Integer getRegisterTypeId(String registerValue)
     {
-        RegisterTypeEntity entity = this.mapOfRegisterTypes.get(registerValue);
-        if(entity == null)
+        Optional<RegisterTypeEntity> optionalRegisterTypeEntity = registerTypeRepository.findByValue(registerValue);
+        if(optionalRegisterTypeEntity.isEmpty())
         {
             return null;
         }
-        return entity.getId();
+
+        return optionalRegisterTypeEntity.get().getId();
     }
 
 }

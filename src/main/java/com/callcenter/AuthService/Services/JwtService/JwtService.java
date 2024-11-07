@@ -1,11 +1,10 @@
 package com.callcenter.AuthService.Services.JwtService;
 
-import com.callcenter.AuthService.DTO.JWT.ExtraClaims.JwtClaimsFromAccountEntity;
-import com.callcenter.AuthService.DTO.JWT.JwtExtraClaims;
+import com.callcenter.AuthService.DTO.JWT.ExtraClaims.JwtClaimsFromAccountEntityProvider;
+import com.callcenter.AuthService.DTO.JWT.JwtClaimsProvider;
 import com.callcenter.AuthService.DTO.JWT.JwtGeneratedToken;
 import com.callcenter.AuthService.Entities.AccountEntity;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.function.Function;
 
 @Service
 public class JwtService
@@ -32,7 +32,7 @@ public class JwtService
         byte[] decodedString = Decoders.BASE64.decode(secret);
         return Keys.hmacShaKeyFor(decodedString);
     }
-    public JwtGeneratedToken generateIndividualToken(String secretKey, long expiration, JwtExtraClaims extraClaims)
+    public JwtGeneratedToken generateIndividualToken(String secretKey, long expiration, JwtClaimsProvider extraClaims)
     {
         long currentTimeMillis = System.currentTimeMillis();
 
@@ -40,9 +40,9 @@ public class JwtService
         Date expiredAt = new Date(currentTimeMillis + expiration);
 
         String token = Jwts.builder().signWith(getSignInKey(secretKey), SignatureAlgorithm.HS256)
+                .setClaims(extraClaims.toMap())
                 .setIssuedAt(issuedAt)
                 .setExpiration(expiredAt)
-                .setClaims(extraClaims.toMap())
                 .compact();
 
         return JwtGeneratedToken.builder()
@@ -54,15 +54,40 @@ public class JwtService
 
     public JwtGeneratedToken generateAccessToken(AccountEntity entity)
     {
-        JwtClaimsFromAccountEntity jwtClaims = new JwtClaimsFromAccountEntity(entity);
+        JwtClaimsFromAccountEntityProvider jwtClaims = new JwtClaimsFromAccountEntityProvider(entity);
 
         return generateIndividualToken(this.accessTokenSecretKey, Long.valueOf(this.accessTokenExpiration).longValue(), jwtClaims);
     }
 
     public JwtGeneratedToken generateRefreshToken(AccountEntity entity)
     {
-        JwtClaimsFromAccountEntity jwtClaims = new JwtClaimsFromAccountEntity(entity);
+        JwtClaimsFromAccountEntityProvider jwtClaims = new JwtClaimsFromAccountEntityProvider(entity);
 
         return generateIndividualToken(this.refreshTokenSecretKey, Long.valueOf(this.refreshTokenExpiration).longValue(), jwtClaims);
+    }
+
+    public Claims getClaims(String token, String secret) throws ExpiredJwtException, UnsupportedJwtException,
+            MalformedJwtException, SignatureException, IllegalArgumentException
+    {
+        return Jwts.parserBuilder().setSigningKey(getSignInKey(secret))
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+    public <RETURN_TYPE> RETURN_TYPE getAccessTokenClaims(String token, Function<Claims, RETURN_TYPE> claimsResolver) throws
+            ExpiredJwtException, UnsupportedJwtException,
+            MalformedJwtException, SignatureException, IllegalArgumentException
+    {
+        Claims claims = this.getClaims(token, this.accessTokenSecretKey);
+        return claimsResolver.apply(claims);
+    }
+
+    public <RETURN_TYPE> RETURN_TYPE getRefreshTokenClaims(String token, Function<Claims, RETURN_TYPE> claimsResolver) throws
+            ExpiredJwtException, UnsupportedJwtException,
+            MalformedJwtException, SignatureException, IllegalArgumentException
+    {
+        Claims claims = this.getClaims(token, this.refreshTokenSecretKey);
+        return claimsResolver.apply(claims);
     }
 }

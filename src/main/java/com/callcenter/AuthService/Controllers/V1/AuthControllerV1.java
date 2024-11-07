@@ -1,10 +1,14 @@
 package com.callcenter.AuthService.Controllers.V1;
 
 import com.callcenter.AuthService.Constants.AccountRegisterTypeEnum;
+import com.callcenter.AuthService.Constants.JWT.TokenVerificationException;
+import com.callcenter.AuthService.Constants.JWT.TokenVerificationStatusEnum;
 import com.callcenter.AuthService.Constants.Register.RegisterException;
 import com.callcenter.AuthService.Constants.Register.RegisterStatusEnum;
 import com.callcenter.AuthService.Constants.SignIn.SignInException;
 import com.callcenter.AuthService.Constants.SignIn.SignInStatusEnum;
+import com.callcenter.AuthService.DTO.Endpoint.APIEndPoint;
+import com.callcenter.AuthService.DTO.Endpoint.APIMethods;
 import com.callcenter.AuthService.DTO.SignIn.ExternalInput.EaPSignInInfoRequest;
 import com.callcenter.AuthService.DTO.Register.ExternalInput.EaPRegisterInfoRequest;
 import com.callcenter.AuthService.DTO.Register.ExternalOutput.EaPRegisterInfoResponse;
@@ -13,14 +17,19 @@ import com.callcenter.AuthService.DTO.Register.RegisterResult;
 import com.callcenter.AuthService.DTO.ServiceResult;
 import com.callcenter.AuthService.DTO.SignIn.ExternalOutput.EaPSignInResponse;
 import com.callcenter.AuthService.DTO.SignIn.SignInResult;
+import com.callcenter.AuthService.DTO.TokenVerification.TokenVerificationRequest;
+import com.callcenter.AuthService.DTO.TokenVerification.TokenVerificationResponse;
+import com.callcenter.AuthService.DTO.TokenVerification.TokenVerificationResult;
 import com.callcenter.AuthService.Services.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -112,6 +121,43 @@ public class AuthControllerV1
                 ResponseEntity apiResponse = new ResponseEntity(response, HttpStatusCode.valueOf(response.getStatusCode()));
 
                 return apiResponse;
+            }
+        });
+
+        return asyncResult;
+    }
+
+    @PostMapping("/verify/access")
+    public CompletableFuture<ResponseEntity> verifyAccessToken(@RequestBody(required = true)TokenVerificationRequest requestBody)
+    {
+        CompletableFuture<ResponseEntity> asyncResult = CompletableFuture.supplyAsync(new Supplier<ResponseEntity>() {
+            @Override
+            public ResponseEntity get() {
+
+                TokenVerificationResponse response = null;
+                Date currentTime = new Date();
+
+                APIEndPoint endPoint = APIEndPoint.builder()
+                        .httpMethod(APIMethods.toMethod(requestBody.targetAPIMethod()))
+                        .path(requestBody.targetAPIPath())
+                        .build();
+
+                try
+                {
+                    ServiceResult<TokenVerificationResult> serviceResult = accountService.verifyAccessToken(requestBody.token(), currentTime, endPoint);
+                    TokenVerificationResult verificationResult = serviceResult.getObject();
+
+                    response = new TokenVerificationResponse(TokenVerificationStatusEnum.SUCCESS);
+                    response.setKey(verificationResult.getTargetEntity().getId());
+                    response.setTargetPermission(verificationResult.getTargetPermission());
+                    response.setRole(verificationResult.getTargetEntity().getRole());
+                }
+                catch (TokenVerificationException exception)
+                {
+                    response = new TokenVerificationResponse(exception.getValue());
+                }
+
+                return new ResponseEntity<TokenVerificationResponse>(response, HttpStatusCode.valueOf(response.getStatusCode()));
             }
         });
 

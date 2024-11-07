@@ -1,27 +1,14 @@
 package com.callcenter.AuthService.DTO.JWT;
 
-import java.util.Map;
+import lombok.Builder;
+import lombok.Getter;
 
-public abstract class JwtExtraClaims<T, KEY_TYPE>
+@Builder
+@Getter
+public class JwtExtraClaims
 {
-    public static final String ACCOUNT_ID = "AID";
-    public static final String USER_ROLE = "USR";
-    public static final String REGISTER_TYPE = "URT";
-    public static final String NONCE = "NUO";
-
-
-    protected JwtExtraClaims(T value)
-    {
-        this.value = value;
-    }
-
-    private T value;
-
-    protected T getValue()
-    {
-        return this.value;
-    }
-
-    public abstract KEY_TYPE getKey();
-    public abstract Map<String, Object> toMap();
+    private String key;
+    private Integer role;
+    private Integer registerType;
+    private String nonce;
 }

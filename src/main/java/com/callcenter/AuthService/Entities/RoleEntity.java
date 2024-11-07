@@ -20,12 +20,14 @@ public class RoleEntity
     private String name;
 
     private String value;
+    private String refer_table;
 
     private RoleEntity()
     {
         this.id = null;
         this.name = null;
         this.value = null;
+        this.refer_table = null;
     }
 
     private RoleEntity(String name, String value)
@@ -33,6 +35,7 @@ public class RoleEntity
         this.id = null;
         this.name = name;
         this.value = value;
+        this.refer_table = null;
     }
 
     private RoleEntity(Integer id, String name, String value)
@@ -40,6 +43,7 @@ public class RoleEntity
         this.id = id;
         this.name = name;
         this.value = value;
+        this.refer_table = null;
     }
 
     public static RoleEntity getInstance(String name, String value)
