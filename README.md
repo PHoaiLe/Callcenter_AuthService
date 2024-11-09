@@ -157,3 +157,33 @@ the current logical flow every time one role be considered.
 </details>
 
 ## Context and Flows
+
+### Register-an-account flow
+<details>
+<summary>-> see detail of the flow</summary>
+
+-    
+    ![Register-account flow](./images/register_account_flow.jpg)
+    
+    
+</details>
+
+### Verify-token flow
+
+<details>
+<summary>-> see detail of the flow</summary>
+
+-
+![Verify-token flow](./images/verify_token_flow.jpg)
+
+</details>
+
+### Authentication flow
+
+<details>
+<summary>-> see detail of the flow</summary>
+
+-
+![Authentication flow](./images/authentication_flow.jpg)
+
+</details>
