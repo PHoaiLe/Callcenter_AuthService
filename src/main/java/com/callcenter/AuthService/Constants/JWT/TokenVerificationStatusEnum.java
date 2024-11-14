@@ -1,9 +1,10 @@
 package com.callcenter.AuthService.Constants.JWT;
 
+import com.callcenter.AuthService.Constants.ResponseStatusEnum;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 
-public enum TokenVerificationStatusEnum
+public enum TokenVerificationStatusEnum implements ResponseStatusEnum
 {
     SUCCESS(HttpStatus.OK, "Valid token!"),
     EXPIRED_TOKEN(HttpStatus.FORBIDDEN, "The token is expired!"),
@@ -24,11 +25,13 @@ public enum TokenVerificationStatusEnum
         this.message = message;
     }
 
+    @Override
     public HttpStatusCode getStatusCode()
     {
         return this.statusCode;
     }
 
+    @Override
     public String getMessage()
     {
         return this.message;

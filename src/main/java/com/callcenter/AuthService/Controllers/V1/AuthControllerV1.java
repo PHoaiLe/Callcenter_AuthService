@@ -7,24 +7,31 @@ import com.callcenter.AuthService.Constants.Register.RegisterException;
 import com.callcenter.AuthService.Constants.Register.RegisterStatusEnum;
 import com.callcenter.AuthService.Constants.SignIn.SignInException;
 import com.callcenter.AuthService.Constants.SignIn.SignInStatusEnum;
+import com.callcenter.AuthService.DTO.ApiResponse;
 import com.callcenter.AuthService.DTO.Endpoint.APIEndPoint;
 import com.callcenter.AuthService.DTO.Endpoint.APIMethods;
+import com.callcenter.AuthService.DTO.Register.ExternalOutput.RegisterResponseBody;
 import com.callcenter.AuthService.DTO.SignIn.ExternalInput.EaPSignInInfoRequest;
 import com.callcenter.AuthService.DTO.Register.ExternalInput.EaPRegisterInfoRequest;
-import com.callcenter.AuthService.DTO.Register.ExternalOutput.EaPRegisterInfoResponse;
 import com.callcenter.AuthService.DTO.Register.InternalInput.EaPAccountRegisterInput;
 import com.callcenter.AuthService.DTO.Register.RegisterResult;
 import com.callcenter.AuthService.DTO.ServiceResult;
-import com.callcenter.AuthService.DTO.SignIn.ExternalOutput.EaPSignInResponse;
+import com.callcenter.AuthService.DTO.SignIn.ExternalOutput.EaPSignInResponseBody;
+import com.callcenter.AuthService.DTO.SignIn.SignInResponseBody;
 import com.callcenter.AuthService.DTO.SignIn.SignInResult;
-import com.callcenter.AuthService.DTO.TokenVerification.TokenVerificationRequest;
-import com.callcenter.AuthService.DTO.TokenVerification.TokenVerificationResponse;
+import com.callcenter.AuthService.DTO.TokenVerification.ExternalInput.TokenVerificationRequest;
+import com.callcenter.AuthService.DTO.TokenVerification.ExternalOutput.TokenVerificationResponseBody;
 import com.callcenter.AuthService.DTO.TokenVerification.TokenVerificationResult;
 import com.callcenter.AuthService.Services.AccountService;
+import com.callcenter.AuthService.Support.Builder.ApiResponseDirector;
+import com.callcenter.AuthService.Support.Builder.RegisterAPIResponse.RegisterApiExceptionResponseBuilder;
+import com.callcenter.AuthService.Support.Builder.RegisterAPIResponse.RegisterApiResponseBuilder;
+import com.callcenter.AuthService.Support.Builder.SignInAPIResponse.SignInApiResponseBuilder;
+import com.callcenter.AuthService.Support.Builder.SignInAPIResponse.SignInApiResponseExceptionResponseBuilder;
+import com.callcenter.AuthService.Support.Builder.TokenVerification.TokenVerificationApiExceptionResponseBuilder;
+import com.callcenter.AuthService.Support.Builder.TokenVerification.TokenVerificationApiResponseBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -62,7 +69,8 @@ public class AuthControllerV1
             public ResponseEntity get() {
 
                 //initialize api response
-                EaPRegisterInfoResponse response = new EaPRegisterInfoResponse(RegisterStatusEnum.SUCCESS);
+                ApiResponse<RegisterResponseBody> response = null;
+                ApiResponseDirector.ApiResponseDirectorBuilder<RegisterStatusEnum, RegisterResponseBody> apiResponseDirectorBuilder = ApiResponseDirector.builder();
 
                 //service task
                 //initialize input
@@ -76,15 +84,17 @@ public class AuthControllerV1
                 {
                     ServiceResult<RegisterResult> serviceResult = accountService.create(registerInput);
 
-                    response.setStatusAndMessage(RegisterStatusEnum.SUCCESS);
+                    apiResponseDirectorBuilder.apiResponseBuilder(new RegisterApiResponseBuilder());
+                    response = apiResponseDirectorBuilder.build().buildApiResponse(RegisterStatusEnum.SUCCESS, new RegisterResponseBody());
                 }
                 catch(RegisterException registerException)
                 {
-                    response.setStatusAndMessage(registerException.getValue());
+                    apiResponseDirectorBuilder.apiResponseBuilder(new RegisterApiExceptionResponseBuilder());
+                    response = apiResponseDirectorBuilder.build().buildApiResponse(registerException.getValue());
                 }
 
 
-                ResponseEntity apiResponse = new ResponseEntity<>(response, HttpStatusCode.valueOf(response.getStatusCode()));
+                ResponseEntity apiResponse = new ResponseEntity<>(response, response.getStatusCode());
 
                 return apiResponse;
             }
@@ -100,25 +110,32 @@ public class AuthControllerV1
             @Override
             public ResponseEntity get()
             {
-                EaPSignInResponse response = new EaPSignInResponse(SignInStatusEnum.SUCCESS);
+                ApiResponse<EaPSignInResponseBody> response = null;
+                ApiResponseDirector.ApiResponseDirectorBuilder<SignInStatusEnum, SignInResponseBody> apiResponseDirectorBuilder = ApiResponseDirector.builder();
 
                 try
                 {
                     ServiceResult<SignInResult> serviceResult = accountService.signInByEmailPassword(provideInfo);
                     SignInResult signInResult = serviceResult.getObject();
 
-                    response.setAccessToken(signInResult.getAccessToken());
-                    response.setAccessTokenExpiration(signInResult.getAccessTokenExpiration());
-                    response.setRefreshToken(signInResult.getRefreshToken());
-                    response.setRefreshTokenExpiration(signInResult.getRefreshTokenExpiration());
-                    response.setStatusAndMessage(SignInStatusEnum.SUCCESS);
+                    EaPSignInResponseBody responseBody = EaPSignInResponseBody.builder()
+                            .accessToken(signInResult.getAccessToken())
+                            .accessTokenExpiration(signInResult.getAccessTokenExpiration())
+                            .refreshToken(signInResult.getRefreshToken())
+                            .refreshTokenExpiration(signInResult.getRefreshTokenExpiration())
+                            .build();
+
+                    apiResponseDirectorBuilder.apiResponseBuilder(new SignInApiResponseBuilder());
+
+                    response = apiResponseDirectorBuilder.build().buildApiResponse(SignInStatusEnum.SUCCESS, responseBody);
                 }
                 catch (SignInException signInException)
                 {
-                    response.setStatusAndMessage(signInException.getValue());
+                    apiResponseDirectorBuilder.apiResponseBuilder(new SignInApiResponseExceptionResponseBuilder());
+                    response = apiResponseDirectorBuilder.build().buildApiResponse(signInException.getValue());
                 }
 
-                ResponseEntity apiResponse = new ResponseEntity(response, HttpStatusCode.valueOf(response.getStatusCode()));
+                ResponseEntity apiResponse = new ResponseEntity(response, response.getStatusCode());
 
                 return apiResponse;
             }
@@ -133,9 +150,10 @@ public class AuthControllerV1
         CompletableFuture<ResponseEntity> asyncResult = CompletableFuture.supplyAsync(new Supplier<ResponseEntity>() {
             @Override
             public ResponseEntity get() {
-
-                TokenVerificationResponse response = null;
                 Date currentTime = new Date();
+
+                ApiResponse<TokenVerificationResponseBody> response = null;
+                ApiResponseDirector.ApiResponseDirectorBuilder<TokenVerificationStatusEnum, TokenVerificationResponseBody> apiResponseDirectorBuilder = ApiResponseDirector.builder();
 
                 APIEndPoint endPoint = APIEndPoint.builder()
                         .httpMethod(APIMethods.toMethod(requestBody.targetAPIMethod()))
@@ -147,17 +165,25 @@ public class AuthControllerV1
                     ServiceResult<TokenVerificationResult> serviceResult = accountService.verifyAccessToken(requestBody.token(), currentTime, endPoint);
                     TokenVerificationResult verificationResult = serviceResult.getObject();
 
-                    response = new TokenVerificationResponse(TokenVerificationStatusEnum.SUCCESS);
-                    response.setKey(verificationResult.getTargetEntity().getId());
-                    response.setTargetPermission(verificationResult.getTargetPermission());
-                    response.setRole(verificationResult.getTargetEntity().getRole());
+                    TokenVerificationResponseBody responseBody = TokenVerificationResponseBody
+                            .builder()
+                            .key(verificationResult.getTargetEntity().getId())
+                            .role(verificationResult.getTargetEntity().getRole())
+                            .targetPermission(verificationResult.getTargetPermission())
+                            .build();
+
+                    apiResponseDirectorBuilder.apiResponseBuilder(new TokenVerificationApiResponseBuilder());
+
+                    response = apiResponseDirectorBuilder.build().buildApiResponse(TokenVerificationStatusEnum.SUCCESS, responseBody);
                 }
                 catch (TokenVerificationException exception)
                 {
-                    response = new TokenVerificationResponse(exception.getValue());
+                    apiResponseDirectorBuilder.apiResponseBuilder(new TokenVerificationApiExceptionResponseBuilder());
+
+                    response = apiResponseDirectorBuilder.build().buildApiResponse(exception.getValue());
                 }
 
-                return new ResponseEntity<TokenVerificationResponse>(response, HttpStatusCode.valueOf(response.getStatusCode()));
+                return new ResponseEntity(response, response.getStatusCode());
             }
         });
 
