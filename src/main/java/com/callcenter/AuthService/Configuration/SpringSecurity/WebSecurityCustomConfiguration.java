@@ -18,6 +18,7 @@ public class WebSecurityCustomConfiguration
                                 .requestMatchers("/apis/v1/auth/login/**").permitAll()
                                 .requestMatchers("/apis/v1/auth/welcome").permitAll()
                                 .requestMatchers("/apis/v1/auth/verify/**").permitAll()
+                                .requestMatchers("/apis/v1/auth/refresh").permitAll()
                                 .anyRequest().authenticated()
                                 )
                 .formLogin(formLogin -> formLogin.disable())

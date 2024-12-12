@@ -8,8 +8,12 @@ import com.callcenter.AuthService.Constants.Register.RegisterStatusEnum;
 import com.callcenter.AuthService.Constants.SignIn.SignInException;
 import com.callcenter.AuthService.Constants.SignIn.SignInStatusEnum;
 import com.callcenter.AuthService.DTO.ApiResponse;
+import com.callcenter.AuthService.DTO.ApiResponseWithData;
 import com.callcenter.AuthService.DTO.Endpoint.APIEndPoint;
 import com.callcenter.AuthService.DTO.Endpoint.APIMethods;
+import com.callcenter.AuthService.DTO.RefreshToken.RefreshTokenRequest;
+import com.callcenter.AuthService.DTO.RefreshToken.RefreshTokenResponseBody;
+import com.callcenter.AuthService.DTO.RefreshToken.RefreshTokenResult;
 import com.callcenter.AuthService.DTO.Register.ExternalOutput.RegisterResponseBody;
 import com.callcenter.AuthService.DTO.SignIn.ExternalInput.EaPSignInInfoRequest;
 import com.callcenter.AuthService.DTO.Register.ExternalInput.EaPRegisterInfoRequest;
@@ -24,6 +28,8 @@ import com.callcenter.AuthService.DTO.TokenVerification.ExternalOutput.TokenVeri
 import com.callcenter.AuthService.DTO.TokenVerification.TokenVerificationResult;
 import com.callcenter.AuthService.Services.AccountService;
 import com.callcenter.AuthService.Support.Builder.ApiResponseDirector;
+import com.callcenter.AuthService.Support.Builder.RefreshToken.RefreshTokenExceptionResponseBuilder;
+import com.callcenter.AuthService.Support.Builder.RefreshToken.RefreshTokenResponseBuilder;
 import com.callcenter.AuthService.Support.Builder.RegisterAPIResponse.RegisterApiExceptionResponseBuilder;
 import com.callcenter.AuthService.Support.Builder.RegisterAPIResponse.RegisterApiResponseBuilder;
 import com.callcenter.AuthService.Support.Builder.SignInAPIResponse.SignInApiResponseBuilder;
@@ -189,5 +195,49 @@ public class AuthControllerV1
 
         return asyncResult;
     }
+
+    @PostMapping("/refresh")
+    public CompletableFuture<ResponseEntity> refreshToken(@RequestBody RefreshTokenRequest requestBody)
+    {
+        CompletableFuture<ResponseEntity> asyncResult = CompletableFuture.supplyAsync(new Supplier<ResponseEntity>() {
+            @Override
+            public ResponseEntity get() {
+
+                Date timeReceivedRequest = new Date();
+                String token = requestBody.token();
+
+                ApiResponse<RefreshTokenResult> apiResponse = null;
+
+                ApiResponseDirector.ApiResponseDirectorBuilder<TokenVerificationStatusEnum, RefreshTokenResponseBody> apiResponseDirectorBuilder = ApiResponseDirector.builder();
+
+                try
+                {
+                    ServiceResult<RefreshTokenResult> serviceResult = accountService.refreshToken(token, timeReceivedRequest);
+
+                    RefreshTokenResult refreshTokenResult = serviceResult.getObject();
+
+                    RefreshTokenResponseBody responseBody = RefreshTokenResponseBody.builder()
+                                            .accessToken(refreshTokenResult.getAccessToken())
+                                            .accessTokenExpiration(refreshTokenResult.getAccessTokenExpiration())
+                                            .refreshToken(refreshTokenResult.getRefreshToken())
+                                            .refreshTokenExpiration(refreshTokenResult.getRefreshTokenExpiration())
+                                                    .build();
+
+                    apiResponseDirectorBuilder.apiResponseBuilder(new RefreshTokenResponseBuilder());
+                    apiResponse = apiResponseDirectorBuilder.build().buildApiResponse(TokenVerificationStatusEnum.SUCCESS, responseBody);
+                }
+                catch(TokenVerificationException exception)
+                {
+                    apiResponseDirectorBuilder.apiResponseBuilder(new RefreshTokenExceptionResponseBuilder());
+                    apiResponse = apiResponseDirectorBuilder.build().buildApiResponse(exception.getValue());
+                }
+
+                return new ResponseEntity(apiResponse, apiResponse.getStatusCode());
+            }
+        });
+
+        return asyncResult;
+    }
+
 
 }

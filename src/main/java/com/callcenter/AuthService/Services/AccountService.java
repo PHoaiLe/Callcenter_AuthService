@@ -9,6 +9,7 @@ import com.callcenter.AuthService.DTO.Endpoint.APIEndPoint;
 import com.callcenter.AuthService.DTO.JWT.JwtClaimsProvider;
 import com.callcenter.AuthService.DTO.JWT.JwtFullClaims;
 import com.callcenter.AuthService.DTO.JWT.JwtGeneratedToken;
+import com.callcenter.AuthService.DTO.RefreshToken.RefreshTokenResult;
 import com.callcenter.AuthService.DTO.SignIn.ExternalInput.EaPSignInInfoRequest;
 import com.callcenter.AuthService.DTO.Register.RegisterStrategyResult;
 import com.callcenter.AuthService.DTO.Register.RegisterInput;
@@ -16,12 +17,10 @@ import com.callcenter.AuthService.DTO.Register.RegisterResult;
 import com.callcenter.AuthService.DTO.ServiceResult;
 import com.callcenter.AuthService.DTO.SignIn.SignInResult;
 import com.callcenter.AuthService.DTO.TokenVerification.TokenVerificationResult;
-import com.callcenter.AuthService.Entities.AccountEntity;
-import com.callcenter.AuthService.Entities.EmailPasswordAuthenticationEntity;
-import com.callcenter.AuthService.Entities.PermissionEntity;
-import com.callcenter.AuthService.Entities.RoleEntity;
+import com.callcenter.AuthService.Entities.*;
 import com.callcenter.AuthService.Repositories.AccountRepository;
 import com.callcenter.AuthService.Repositories.EmailPasswordRepository;
+import com.callcenter.AuthService.Repositories.ProvidedRefreshTokenRepository;
 import com.callcenter.AuthService.Services.Events.AccountEventPublisher;
 import com.callcenter.AuthService.Services.Events.RefreshTokenRecordingEvent.RefreshTokenEventProp;
 import com.callcenter.AuthService.Services.JwtService.JwtService;
@@ -35,6 +34,7 @@ import io.jsonwebtoken.security.SignatureException;
 import jakarta.annotation.Nullable;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -56,6 +56,8 @@ public class AccountService
 
     private AccountEventPublisher accountEventPublisher;
 
+    private ProvidedRefreshTokenRepository providedRefreshTokenRepository;
+
     public AccountService()
     {}
 
@@ -65,7 +67,7 @@ public class AccountService
                           AccountStatusService accountStatusService, EmailPasswordRepository emailPasswordRepository,
                           SupportPasswordProvider supportPasswordProvider, JwtService jwtService,
                           AccountEventPublisher accountEventPublisher,
-                          PermissionService permissionService)
+                          PermissionService permissionService, ProvidedRefreshTokenRepository providedRefreshTokenRepository)
     {
         this.registerServiceProviderV2 = registerServiceProviderV2;
         this.accountRepository = accountRepository;
@@ -77,6 +79,7 @@ public class AccountService
         this.jwtService = jwtService;
         this.accountEventPublisher = accountEventPublisher;
         this.permissionService = permissionService;
+        this.providedRefreshTokenRepository = providedRefreshTokenRepository;
     }
 
     protected AccountEntity createAccountRecord(
@@ -283,6 +286,87 @@ public class AccountService
 
         ServiceResult<TokenVerificationResult> serviceResult = new ServiceResult<>(true, result);
         return serviceResult;
+    }
+
+    public ServiceResult<RefreshTokenResult> refreshToken(String token, Date time) throws TokenVerificationException
+    {
+        JwtFullClaims claims = null;
+
+        try
+        {
+            claims = jwtService.getRefreshTokenClaims(token, JwtClaimsProvider::toJwtFullClaims);
+        }
+        catch (ExpiredJwtException exception)
+        {
+            throw TokenVerificationException.EXPIRED_TOKEN;
+        }
+        catch (UnsupportedJwtException exception)
+        {
+            throw TokenVerificationException.UNSUPPORTED_JWT_TOKEN;
+        }
+        catch (MalformedJwtException exception)
+        {
+            //TODO: do security process here
+            throw TokenVerificationException.MALFORMED_JWT;
+        }
+        catch (SignatureException exception)
+        {
+            //TODO: do security process here
+            throw TokenVerificationException.INVALID_SIGNATURE;
+        }
+        catch (IllegalArgumentException exception)
+        {
+            //TODO: do security process here
+            throw TokenVerificationException.ILLEGAL_ARGUMENTS;
+        }
+
+
+        Optional<ProvidedRefreshTokenEntity> optional = this.providedRefreshTokenRepository.findLatestProvidedRefreshToken(claims.getKey(), time);
+        if(optional.isEmpty())
+        {
+            throw TokenVerificationException.INVALID_AUTHORIZATION_INFO;
+        }
+
+
+        ProvidedRefreshTokenEntity providedRefreshTokenEntity = optional.get();
+
+        if(providedRefreshTokenEntity.getExpired_at().before(time))
+        {
+            throw TokenVerificationException.EXPIRED_TOKEN;
+        }
+
+        if(this.supportPasswordProvider.matchByBCrypt(providedRefreshTokenEntity.getToken(), token) == false)
+        {
+            throw TokenVerificationException.INVALID_AUTHORIZATION_INFO;
+        }
+
+        Optional<AccountEntity> optionalAccountEntity = this.accountRepository.findById(claims.getKey());
+
+        if(optionalAccountEntity.isEmpty())
+        {
+            throw  TokenVerificationException.INVALID_AUTHORIZATION_INFO;
+        }
+
+        providedRefreshTokenEntity.setUsed_at(time);
+        providedRefreshTokenEntity.setAvailable(false);
+        this.providedRefreshTokenRepository.save(providedRefreshTokenEntity);
+
+        JwtGeneratedToken accessToken = jwtService.generateAccessToken(optionalAccountEntity.get());
+        JwtGeneratedToken refreshToken = jwtService.generateRefreshToken(optionalAccountEntity.get());
+
+        RefreshTokenResult refreshResult = RefreshTokenResult.builder()
+                .accessToken(accessToken.getToken())
+                .accessTokenExpiration(accessToken.getExpiredAt())
+                .refreshToken(refreshToken.getToken())
+                .refreshTokenExpiration(refreshToken.getExpiredAt())
+                .build();
+
+        RefreshTokenEventProp refreshTokenEventProp = new RefreshTokenEventProp(optionalAccountEntity.get().getId(),
+                refreshToken.getToken(), refreshToken.getIssuedAt(), refreshToken.getExpiredAt());
+
+        this.accountEventPublisher.publishEvent(refreshTokenEventProp);
+
+        return new ServiceResult<RefreshTokenResult>(true, refreshResult);
     }
 
 }
