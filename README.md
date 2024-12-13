@@ -35,7 +35,8 @@ I'm also willing to learn and apply new technologies to this project to improve 
 
 - Create a well-built Auth Service
 - The service source code can be easily extended in the future
-- The service will be deployed on AWS EC2
+
+[//]: # (- The service will be deployed on AWS EC2)
 - Gaining comprehensive knowledge of authentication and authorization in a system
 - Knowledge of Spring (Spring Boot) framework
 - .etc
@@ -54,7 +55,8 @@ that must handle the larger amount of roles or permissions inserted. It is not i
 the current logical flow every time one role be considered.
 - Applying refresh token rotation implementation, which adapts requirements at basic level.
 - Handle multiple requests, apply Non-blocking I/O
-- Verify token or authorization via gRPC
+
+[//]: # (- Verify token or authorization via gRPC)
 - Implement clean, scalable, easily maintained source code
 - 
 - (*) Requirements will be improved later
